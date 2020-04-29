@@ -7540,7 +7540,7 @@ var App = (function (exports) {
   function start$1() {
       const datapath = window.location.hostname === "localhost"
           ? "./json/"
-          : "https://raw.githubusercontent.com/NELCSU/ED/master/docs/json/";
+          : "https://raw.githubusercontent.com/NELCSU/EDFlows/master/docs/json/";
       json(datapath + "config.json", function (d) {
           const config = d;
           config.db.path = datapath;
