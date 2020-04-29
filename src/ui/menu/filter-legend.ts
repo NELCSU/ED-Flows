@@ -62,7 +62,7 @@ export function initSankeyLegend(config: TConfig) {
 		const box: DOMRect = svg.getBoundingClientRect();
 		const h = box.height;
 		const w = box.width;
-		const rh: number = config.legend.map(leg => leg.label.length * 23).reduce((ac, le) => ac + le, 0);
+		const rh: number = config.legend.map(leg => leg.label.length * 26).reduce((ac, le) => ac + le, 0);
 		const rw: number = 250;
 		const m = config.sankey.margin();
 		const nw = config.sankey.nodeWidth() / 2;
