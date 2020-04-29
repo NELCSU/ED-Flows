@@ -30,7 +30,7 @@ export function initMenu(config: TConfig) {
   initCallList(config);
   initDensitySlider(config);
   initOpacitySlider(config);
-  //initSankeyLegend(config);
+  initSankeyLegend(config);
   initSankeyNodeMovement(config);
   initSankeyNodeOrientation(config);
   initUIThemes(config);
@@ -39,11 +39,18 @@ export function initMenu(config: TConfig) {
   window.addEventListener("filter-action", () => {
     window.dispatchEvent(new CustomEvent("data-quality"));
     setQueryHash(config);
-    config.db.file = config.querystring.organisation + config.querystring.day + config.querystring.call + ".json";
+    config.db.file = "Legend" + config.querystring.organisation + config.querystring.day + config.querystring.call + ".json";
+
     openDataFile(config)
       .then((content) => {
-        config.db.sankey = JSON.parse(content);
-        window.dispatchEvent(new CustomEvent("sankey-chart"));
+        config.legend = [JSON.parse(content)];
+        config.db.file = config.querystring.organisation + config.querystring.day + config.querystring.call + ".json";
+
+        openDataFile(config)
+          .then((content) => {
+            config.db.sankey = JSON.parse(content);
+            window.dispatchEvent(new CustomEvent("sankey-chart"));
+          });
       });
   });
 }

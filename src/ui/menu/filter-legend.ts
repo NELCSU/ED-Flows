@@ -62,8 +62,8 @@ export function initSankeyLegend(config: TConfig) {
 		const box: DOMRect = svg.getBoundingClientRect();
 		const h = box.height;
 		const w = box.width;
-		const rh: number = config.legend.map(leg => leg.label.length * 26).reduce((ac, le) => ac + le, 0);
-		const rw: number = 150;
+		const rh: number = config.legend.map(leg => leg.label.length * 23).reduce((ac, le) => ac + le, 0);
+		const rw: number = 250;
 		const m = config.sankey.margin();
 		const nw = config.sankey.nodeWidth() / 2;
 
@@ -149,17 +149,20 @@ export function initSankeyLegend(config: TConfig) {
 			.text("Close legend");
 
 		let lasty = 10;
-		config.legend.forEach((leg: any, n: number) => {
-			lasty += 30;
+		config.legend.forEach((leg: any) => {
 			// subtitle
-			legend.append("text")
-				.attr("class", "contents")
-				.attr("x", 7)
-				.attr("y", lasty)
-				.attr("text-anchor", "start")
-				.text((d: any) => leg.title);
+			if (leg.title) {
+				lasty += 30;
 
-			leg.colors.forEach((item: string, m: number) => {
+				legend.append("text")
+					.attr("class", "contents")
+					.attr("x", 7)
+					.attr("y", lasty)
+					.attr("text-anchor", "start")
+					.text((d: any) => leg.title);
+			}
+
+			leg.color.forEach((item: string, m: number) => {
 				lasty += 17;
 				const g = legend.append("g")
 					.attr("class", "contents")
@@ -175,7 +178,7 @@ export function initSankeyLegend(config: TConfig) {
 					.classed("chart-legend", true)
 					.attr("x", 29)
 					.attr("y", 5)
-					.text(leg.labels[m]);
+					.text(leg.label[m]);
 			});
 		});
 
