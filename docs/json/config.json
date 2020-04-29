@@ -69,7 +69,7 @@
       "ltr": true,
       "ttb": false
     },
-    "organisations": ["INWL", "LAS", "LCW", "London", "NCL", "NEL", "ONWL", "SEL", "SWL"]
+    "organisations": ["NCL", "NEL", "NWL", "SEL", "SWL"]
   },
   "legend": [
     {
