@@ -1,0 +1,4 @@
+{
+  "label": ["5.24 (A&E)", "5.26 (Other Service)", "5.27c (Non Clinical)", "None", "5.25b (Speak to Primary care)", "5.25a (Contact Primary care)", "5.27a (Health Information)"],
+  "color": ["#8DD3C7", "#FFFFB3", "#BEBADA", "#FB8072", "#80B1D3", "#FDB462", "#B3DE69"]
+}

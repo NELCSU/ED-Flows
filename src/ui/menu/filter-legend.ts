@@ -1,5 +1,5 @@
 
-import type { TConfig, TNode, TPoint } from "../../typings/ED";
+import type { TConfig, TPoint } from "../../typings/ED";
 import { event, select } from "d3-selection";
 import { drag } from "d3-drag";
 import { transition } from "d3-transition";
@@ -62,7 +62,7 @@ export function initSankeyLegend(config: TConfig) {
 		const box: DOMRect = svg.getBoundingClientRect();
 		const h = box.height;
 		const w = box.width;
-		const rh: number = config.legend.map(leg => leg.labels.length * 26).reduce((ac, le) => ac + le, 0);
+		const rh: number = config.legend.map(leg => leg.label.length * 26).reduce((ac, le) => ac + le, 0);
 		const rw: number = 150;
 		const m = config.sankey.margin();
 		const nw = config.sankey.nodeWidth() / 2;

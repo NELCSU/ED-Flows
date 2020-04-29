@@ -30,7 +30,7 @@ export function initMenu(config: TConfig) {
   initCallList(config);
   initDensitySlider(config);
   initOpacitySlider(config);
-  initSankeyLegend(config);
+  //initSankeyLegend(config);
   initSankeyNodeMovement(config);
   initSankeyNodeOrientation(config);
   initUIThemes(config);

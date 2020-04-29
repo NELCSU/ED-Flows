@@ -73,14 +73,8 @@
   },
   "legend": [
     {
-      "title": "Call types",
-      "colors": ["#FCC5C0", "#8DD3C7", "#BEBADA", "#FB8072", "#FF7F00", "#A65628"],
-      "labels": ["CMC", "Starlines", "Other", "Admin", "Dental", "Worsening"]
-    },
-    {
-      "title": "Flow levels",
-      "colors": ["#8C2D04", "#D94801", "#F16913", "#FD8D3C", "#FDAE6B", "#FDD0A2"],
-      "labels": ["Flow level 1", "Flow level 2", "Flow level 3", "Flow level 4", "Flow level 5", "Flow level 6"]
+      "color": [],
+      "label": []
     }
   ],
   "querystring": {
