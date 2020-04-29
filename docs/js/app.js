@@ -4539,21 +4539,21 @@ var App = (function (exports) {
           }
       });
       graph.links.forEach((link) => {
-          if (link.supply && !link.supply[0].color) {
+          if (link.supply && link.supply.length && !link.supply[0].color) {
               const max = Math.max(...link.supply.map(l => l.value), 0);
               link.supply.forEach(l => l.color = color$1(l.value / max));
           }
-          if (link.supplyDx && !link.supplyDx[0].color) {
+          if (link.supplyDx && link.supplyDx.length && !link.supplyDx[0].color) {
               const max = Math.max(...link.supplyDx.map(l => l.value), 0);
               link.supplyDx.forEach(l => l.color = color$1(l.value / max));
           }
-          if (link.supplyService && !link.supplyService[0].color) {
-              const max = Math.max(...link.supplyService.map(l => l.value), 0);
-              link.supplyService.forEach(l => l.color = color$1(l.value / max));
+          if (link.supplySG && link.supplySG.length && !link.supplySG[0].color) {
+              const max = Math.max(...link.supplySG.map(l => l.value), 0);
+              link.supplySG.forEach(l => l.color = color$1(l.value / max));
           }
-          if (link.supplyBook && !link.supplyBook[0].color) {
-              const max = Math.max(...link.supplyBook.map(l => l.value), 0);
-              link.supplyBook.forEach(l => l.color = color$1(l.value / max));
+          if (link.supplyRead && link.supplyRead.length > 0 && !link.supplyRead[0].color) {
+              const max = Math.max(...link.supplyRead.map(l => l.value), 0);
+              link.supplyRead.forEach(l => l.color = color$1(l.value / max));
           }
       });
       const linkCollection = canvas.append("g")
@@ -4648,12 +4648,12 @@ var App = (function (exports) {
               d.supplyDx.sort(desc);
               config.breakdown.chart.push(d.supplyDx);
           }
-          if (d.supplyService && d.supplyService.length > 0) {
-              d.supplyService.sort(desc);
-              config.breakdown.chart.push(d.supplyService);
+          if (d.supplySG && d.supplySG.length > 0) {
+              d.supplySG.sort(desc);
+              config.breakdown.chart.push(d.supplySG);
           }
-          if (d.supplyBook && d.supplyBook.length > 0) {
-              config.breakdown.chart.push(d.supplyBook);
+          if (d.supplyRead && d.supplyRead.length > 0) {
+              config.breakdown.chart.push(d.supplyRead);
           }
           window.dispatchEvent(new CustomEvent("show-breakdown"));
       }
