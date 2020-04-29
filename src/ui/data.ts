@@ -2,6 +2,7 @@ import { updateCallList } from "../ui/menu/filter-call";
 import { updateDayList } from "./menu/filter-day";
 import { setQueryHash } from "../ui/urlhash";
 import type { TConfig, TJSZip } from "../typings/ED";
+import { left, right } from "../utils/string";
 
 /**
  * @param config 
@@ -47,7 +48,11 @@ export function processDayFile(data: string, config: TConfig) {
   for (let key in config.db.dq.interpolated) {
     config.filters.days.push(key);
 	}
-	config.filters.days.sort((a: string, b: string) => parseInt("1" + a) - parseInt("1" + b));
+	config.filters.days.sort((a: string, b: string) => {
+		const pa = right(a, 2) + left(a, 2);
+		const pb = right(b, 2) + left(b, 2);
+		return pa > pb ? 1 : -1;
+	});
 	updateDayList(config);
 	updateCallList(config);
 	setQueryHash(config);

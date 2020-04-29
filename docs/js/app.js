@@ -705,7 +705,11 @@ var App = (function (exports) {
       for (let key in config.db.dq.interpolated) {
           config.filters.days.push(key);
       }
-      config.filters.days.sort((a, b) => parseInt("1" + a) - parseInt("1" + b));
+      config.filters.days.sort((a, b) => {
+          const pa = right(a, 2) + left(a, 2);
+          const pb = right(b, 2) + left(b, 2);
+          return pa > pb ? 1 : -1;
+      });
       updateDayList(config);
       updateCallList(config);
       setQueryHash(config);
@@ -4830,10 +4834,9 @@ var App = (function (exports) {
           }
       }
       getQueryHash(config);
-      org.value = "SEL";
-      /*if (config.querystring.organisation) {
+      if (config.querystring.organisation) {
           org.value = config.querystring.organisation;
-      }*/
+      }
       org.addEventListener("change", () => __awaiter(this, void 0, void 0, function* () {
           window.dispatchEvent(new CustomEvent("org-selected", { detail: org.value }));
           config.db.file = org.options[org.selectedIndex].value + ".zip";

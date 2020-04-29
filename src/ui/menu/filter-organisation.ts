@@ -19,12 +19,10 @@ export function initOrganisationList(config: TConfig) {
 		}
 	}
 	getQueryHash(config);
-	
-	org.value = "SEL";
 
-	/*if (config.querystring.organisation) {
+	if (config.querystring.organisation) {
 		org.value = config.querystring.organisation;
-	}*/
+	}
 
 	org.addEventListener("change", async () => {
 		window.dispatchEvent(new CustomEvent("org-selected", { detail: org.value }));
