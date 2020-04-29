@@ -1,0 +1,54 @@
+@use "globals";
+
+select {
+  direction: rtl;
+  height: 1.5em;
+  width: 130px;
+}
+
+input:hover,
+select:hover,
+option:hover {
+  cursor: pointer;
+}
+
+.call-options {
+  @include globals.fx($dir: column);
+}
+
+.menu {
+  @include globals.fx($dir: column);
+  @include globals.transition;
+
+  line-height: 26px;
+  min-width: 220px;
+  padding: 15px;
+  position: fixed;
+  right: 0;
+  top: 40px;
+  width: 25%;
+  z-index: 600000;
+}
+
+.menu.ready {
+  @include globals.disabled;
+
+  transform: translateX(100%);
+}
+
+.menu-button {
+  @include globals.fx;
+  @include globals.fx-center;
+
+  font-weight: bold;
+  padding: 5px;
+  user-select: none;
+}
+
+.panel-row {
+  @include globals.fx;
+
+  align-items: center;
+  justify-content: space-between;
+  min-height: 1.3em;
+}

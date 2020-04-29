@@ -1,0 +1,94 @@
+@use "globals";
+
+img.ready {
+  cursor: pointer;
+  filter: opacity(30%);
+}
+
+img.ready:hover {
+  filter: opacity(60%);
+}
+
+.breakdown {
+  @include globals.fx($dir: row);
+  @include globals.transition;
+
+  bottom: 0;
+  height: 33%;
+  left: 0;
+  position: fixed;
+  width: 100%;
+  z-index: 600000;
+}
+
+.breakdown.ready {
+  transform: translateY(100%);
+}
+
+.breakdown-action {
+  padding-left: 10px;
+}
+
+.breakdown-bar {
+  @include globals.fx;
+
+  align-items: center;
+  justify-content: space-between;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: 100%;
+}
+
+.breakdown-img {
+  height: 32px;
+  width: 32px;
+}
+
+.breakdown-close {
+  @include globals.fx;
+  @include globals.fx-center;
+
+  cursor: pointer;
+  font-size: 24px;
+  font-weight: bold;
+  height: 20px;
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  width: 20px;
+}
+
+.breakdown-close::after {
+  content: "\00d7";
+  display: inline-block;
+}
+
+.breakdown-message,
+.breakdown-chart {
+  @include globals.fx($dir: column);
+  @include globals.fx-center;
+
+  flex-grow: 1;
+  height: 100%;
+}
+
+.breakdown-message {
+  @include globals.fx($dir: column);
+  @include globals.fx-center;
+
+  height: 100%;
+  margin-left: 10px;
+  max-width: 30%;
+}
+
+.breakdown-chart {
+  flex-grow: 1;
+  height: 100%;
+}
+
+.switch-chart {
+  cursor: pointer;
+  margin-top: 10px;
+  user-select: none;
+}

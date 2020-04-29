@@ -1,0 +1,118 @@
+<!DOCTYPE xhtml>
+<html xmlns="https://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+	<meta name="description" content="Urgent Care COVID-19 Flows" />
+	<meta name="keywords" content="NHS, COVID-19, urgent care" />
+
+	<title>Urgent Care COVID-19 Flows</title>
+
+	<link href="favicon.ico" rel="shortcut icon" />
+	<link href="css/index.css" rel="stylesheet" />
+
+	<script src="lib/jszip/jszip.min.js"></script>
+	<script src="lib/jszip-utils.min.js"></script>
+</head>
+
+<body>
+	<div class="loading th-fg-color">
+		<div>Loading ...</div>
+	</div>
+	<div id="content" style="opacity:0; visibility:hidden;">
+
+		<div id="titlebar">
+			<div class="titlebar-item">
+				<a href="index.html" title="Home">
+					<img class="titlebar-icon" src="images/nhs.svg" alt="Home" />
+				</a>
+				<h1 class="th-fg-color">Urgent Care COVID-19 Flows</h1>
+			</div>
+			<div class="titlebar-item">
+				<div id="lblOrganisationStatus" class="th-fg-color">Organisation</div>
+				<div id="lblDayStatus" class="th-fg-color">Day</div>
+				<div id="lblCallStatus" class="th-fg-color">Call</div>
+				<div id="lblDQStatus"><img src="images/circle.svg" alt="Green" /></div>
+				<div class="menu-button">CHART OPTIONS</div>
+			</div>
+		</div>
+
+		<div id="chart"></div>
+	</div>
+
+	<aside class="breakdown ready">
+		<div class="breakdown-bar">
+			<div class="breakdown-action">
+				<img class="breakdown-img" src="./images/bar.png" alt="Bar chart" title="View bar chart" />
+				<img class="breakdown-img ready" src="./images/stream.png" alt="Stream graph" title="View stream graph" />
+			</div>
+			<div class="breakdown-close"></div>
+		</div>
+		<div class="breakdown-message"></div>
+		<div class="breakdown-chart"></div>
+	</aside>
+
+	<aside class="menu border ready">
+		<div class="panel-row th-fg-color" title="Select an organisation from the list">
+			<label id="lblOrganisation" for="Organisation">Organisation:</label>
+			<select id="Organisation"></select>
+		</div>
+
+		<div class="panel-row th-fg-color" title="Select a day (moving right moves forward through the available days)">
+			<label id="lblDay" for="Day">Day:</label>
+			<input id="Day" type="range" min="0" max="10" value="1" />
+		</div>
+
+		<div class="call-options th-fg-color" title="Select a category of call"></div>
+
+		<div class="panel-row th-fg-color">
+			<label>Move nodes:</label>
+			<div>
+				<input id="MoveX" type="checkbox" checked>
+				<label id="lblMoveX" for="MoveX" title="Enable horizontal node dragging">↔</label>
+				<input id="MoveY" type="checkbox" checked>
+				<label id="lblMoveY" for="MoveY" title="Enable vertical node dragging">↕</label>
+			</div>
+		</div>
+
+		<div class="panel-row th-fg-color" title="Adjust the density of the nodes">
+			<label id="lblDensity" for="Density">Density:</label>
+			<input id="Density" type="range" min="5" max="50" step="2" value="5" />
+		</div>
+
+		<div class="panel-row th-fg-color" title="Adjust the opacity of the nodes">
+			<label id="lblOpacity" for="Opacity">Opacity:</label>
+			<input id="Opacity" type="range" min="0.3" max="0.7" step="0.05" value="0.4" />
+		</div>
+
+		<div class="panel-row th-fg-color">
+			<label>Orientation:</label>
+			<div>
+				<input id="OrientLTR" type="radio" name="grpOrientation" checked>
+				<label id="lblOrientLTR" for="OrientLTR" title="Switch to left right orientation">↔</label>
+				<input id="OrientTTB" type="radio" name="grpOrientation">
+				<label id="lblOrientTTB" for="OrientTTB" title="EXPERIMENTAL: top down orientation">↕</label>
+			</div>
+		</div>
+
+		<div class="panel-row th-fg-color" title="Show/hide the legend">
+			<label>Legend:</label>
+			<div>
+				<input id="LegendShowHide" type="checkbox" checked>
+				<label id="lblLegendShowHide" for="LegendShowHide">Show</label>
+			</div>		
+		</div>
+
+		<div class="panel-row th-fg-color" title="Change page color scheme">
+			<label id="lblColors" for="Colors">Colors:</label>
+			<select id="Colors"></select>
+		</div>
+	</aside>
+
+	<script src="js/app.js"></script>
+	<script type="text/javascript">
+		App.start();
+	</script>
+</body>
+
+</html>

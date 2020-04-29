@@ -1,0 +1,66 @@
+body {
+  background: #fff;
+}
+
+.menu {
+  background-color: #fff;
+}
+
+.menu-button {
+  background-color: #1f4a80;
+  color: #fff;
+}
+
+.border {
+  border: 1px solid #b6d4f8;
+}
+
+.border-left {
+  border-left: 1px solid #b6d4f8;
+}
+
+rect.chart-legend {
+  fill: #fff;
+  stroke: #1f4a80;
+}
+
+text.chart-legend {
+  fill: #1f4a80;
+}
+
+.handle {
+  background: #1f4a80;
+  color: #3c94ff;
+}
+
+.node-label {
+  fill: #000;
+}
+
+.th-fg-color {
+  color: #1f4a80;
+}
+
+.breakdown {
+  background: #fff;
+  border-top: 1px solid #1f4a80;
+}
+
+.breakdown-close {
+  background-color: #1f4a80;
+  color: #fff;
+}
+
+.switch-chart {
+  color: #1f4a80;
+}
+
+.legend-resize {
+  color: #1f4a80;
+}
+
+select {
+  background: #b6d4f8;
+  border-color: #3c94ff;
+  color: #1f4a80;
+}

@@ -1,0 +1,75 @@
+$color1: #aa8;
+$color2: #111;
+$color3: #444;
+$color4: #fff;
+$color5: #222;
+
+body {
+  background: $color2;
+  color: $color1;
+  fill: $color1;
+}
+
+.menu {
+  background-color: $color2;
+}
+
+.menu-button {
+  background-color: $color3;
+  color: $color1;
+}
+
+.border {
+  border: 1px solid $color3;
+}
+
+.border-left {
+  border-left: 1px solid $color3;
+}
+
+rect.chart-legend {
+  fill: $color5;
+  stroke: $color1;
+}
+
+text.chart-legend {
+  fill: $color1;
+}
+
+.handle {
+  background: $color1;
+  color: $color4;
+}
+
+.node-label {
+  fill: $color5;
+}
+
+.th-fg-color {
+  color: $color1;
+}
+
+.breakdown {
+  background: $color2;
+  border-top: 1px solid $color1;
+}
+
+.breakdown-close {
+  background-color: rgba(22, 22, 22, 0.8);
+  border: 1px solid $color3;
+  color: $color1;
+}
+
+.switch-chart {
+  color: $color1;
+}
+
+.legend-resize {
+  color: $color1;
+}
+
+select {
+  background: $color3;
+  border-color: $color5;
+  color: $color1;
+}

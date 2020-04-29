@@ -1,0 +1,28 @@
+@use "globals";
+
+.link {
+  transition: stroke-opacity 500ms;
+}
+
+.link.selected {
+  stroke-opacity: 1 !important;
+}
+
+.link:hover {
+  cursor: pointer;
+}
+
+.node-label {
+  fill: #000;
+  font-weight: bold;
+  text-anchor: middle;
+}
+
+.node rect {
+  cursor: move;
+  shape-rendering: crispEdges;
+}
+
+.node text {
+  pointer-events: none;
+}

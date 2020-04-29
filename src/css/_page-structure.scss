@@ -1,0 +1,93 @@
+@use "globals";
+
+html,
+body {
+  @include globals.reset;
+  @include globals.maxsize;
+
+  font-family: globals.$font-stack;
+  overflow: hidden;
+}
+
+svg {
+  font-weight: normal;
+}
+
+h1 {
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+h2 {
+  font-size: 1.3em;
+  font-weight: bold;
+}
+
+a,
+a:active {
+  text-decoration: none;
+}
+
+a:hover,
+a:focus {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.dev-mode {
+  background-color: yellow;
+  color: #000;
+  font-size: 0.7em;
+  font-weight: bold;
+  left: 40%;
+  opacity: 0.9;
+  padding: 5px;
+  position: fixed;
+  text-align: center;
+  top: 0;
+  width: 20%;
+  z-index: 1;
+}
+
+.flex-center {
+  @include globals.fx;
+
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.hide {
+  display: none;
+}
+
+.loading {
+  @include globals.fx;
+  @include globals.fx-center;
+  @include globals.maxsize;
+
+  left: 0;
+  position: fixed;
+  top: 0;
+  z-index: 0;
+}
+
+.loading > div {
+  font-size: 75px;
+  font-weight: bold;
+}
+
+#chart {
+  @include globals.fx;
+  @include globals.fx-center;
+  @include globals.maxsize;
+}
+
+#content {
+  @include globals.fx($dir: column);
+  @include globals.transition($property: opacity);
+  @include globals.maxsize;
+
+  left: 0;
+  position: absolute;
+  top: 0;
+}
