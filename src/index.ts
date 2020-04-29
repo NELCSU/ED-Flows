@@ -9,7 +9,7 @@ import { json } from "d3-request";
 export function start() {
   const datapath = window.location.hostname === "localhost"
     ? "./json/" 
-    : "https://raw.githubusercontent.com/NELCSU/EDFlows/master/docs/json/";
+    : "https://raw.githubusercontent.com/NELCSU/ED-Flows/master/docs/json/";
 
   json(datapath + "config.json", function(d) {
     const config = d;
