@@ -2,7 +2,7 @@ import { updateCallList } from "../ui/menu/filter-call";
 import { updateDayList } from "./menu/filter-day";
 import { setQueryHash } from "../ui/urlhash";
 import type { TConfig, TJSZip } from "../typings/ED";
-import { left, right } from "../utils/string";
+import { left, right } from "@buckneri/string";
 
 /**
  * @param config 

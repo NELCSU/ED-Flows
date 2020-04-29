@@ -68,28 +68,30 @@ var App = (function (exports) {
       }
   }
 
+  /**
+   * Select n characters from the left side of string s
+   * @param s - string to select from
+   * @param n - number of characters to select
+   */
+  function left(s, n) {
+      n = Math.abs(n);
+      return s.slice(0, n === 0 ? s.length : n);
+  }
+  /**
+   * Select n characters from the right side of string s
+   * @param s - string to select from
+   * @param n - number of characters to select
+   */
+  function right(s, n) {
+      return s.slice(-1 * Math.abs(n));
+  }
+
   /***
    * Replace hyphens by spaces
    * @param s
    */
   function addSpaces(s) {
       return s.replace(/-/g, " ");
-  }
-  /**
-   * Select n characters from the left side of string s
-   * @param s
-   * @param n
-   */
-  function left(s, n) {
-      return s.slice(0, Math.abs(n));
-  }
-  /**
-   * Select n characters from the right side of string s
-   * @param s
-   * @param n
-   */
-  function right(s, n) {
-      return s.slice(-1 * n);
   }
   /***
    * Replace spaces by hyphens
@@ -4821,11 +4823,11 @@ var App = (function (exports) {
 
   /**
    * returns short date format based on data key "daymonth" e.g. "0102" being 1st Feb
-   * @param day
+   * @param s
    */
-  function getScreenDate(day) {
-      const today = new Date(new Date().getFullYear(), parseInt(day.substr(2, 2)) - 1, parseInt(day.substr(0, 2)));
-      return today.toLocaleDateString("en-GB", { month: "short", day: "numeric" });
+  function getMonthYear(s) {
+      const today = new Date(parseInt(s.substr(0, 4)), parseInt(s.substr(4, 2)) - 1, 1);
+      return today.toLocaleDateString("en-GB", { year: "numeric", month: "short" });
   }
   const format2 = format(",.2f"), format1 = format(",.1f"), format0 = format(",.0f");
   /**
@@ -4844,7 +4846,7 @@ var App = (function (exports) {
   function initDayList(config) {
       day.addEventListener("change", e => {
           const raw = config.filters.days[parseInt(day.value)];
-          const fdate = getScreenDate(raw);
+          const fdate = getMonthYear(raw);
           window.dispatchEvent(new CustomEvent("day-selected", { detail: fdate }));
           label.textContent = `Day: ${fdate}`;
           window.dispatchEvent(new CustomEvent("filter-action"));
@@ -4859,7 +4861,7 @@ var App = (function (exports) {
       const i = config.filters.days.findIndex((e) => e === config.querystring.day);
       day.value = (i > -1 ? i : 0) + "";
       const raw = config.filters.days[parseInt(day.value)];
-      const fdate = getScreenDate(raw);
+      const fdate = getMonthYear(raw);
       label.textContent = `Day: ${fdate}`;
       window.dispatchEvent(new CustomEvent("day-selected", { detail: fdate }));
   }
@@ -6190,7 +6192,7 @@ var App = (function (exports) {
           let state = i.length + es.length + ms.length;
           status.src = state < 10 ? config.status.green.src : state < 15 ? config.status.amber.src : config.status.red.src;
           container.title = state < 10 ? config.status.green.title : state < 15 ? config.status.amber.title : config.status.red.title;
-          let qt = `<div class="data-quality">Data availability for <b>${getScreenDate(config.querystring.day)}</b>: `;
+          let qt = `<div class="data-quality">Data availability for <b>${getMonthYear(config.querystring.day)}</b>: `;
           if (state === 0) {
               qt += `Complete.<br>All data is available in the database.`;
           }

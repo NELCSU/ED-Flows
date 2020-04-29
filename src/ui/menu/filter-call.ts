@@ -1,4 +1,4 @@
-import { left, right } from "../../utils/string";
+import { left, right } from "@buckneri/string";
 import { getQueryHash } from "../urlhash";
 import type { TConfig, TFilterCall } from "../../typings/ED";
 

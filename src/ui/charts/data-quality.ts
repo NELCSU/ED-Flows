@@ -1,4 +1,4 @@
-import { getScreenDate } from "../../utils/format";
+import { getMonthYear } from "../../utils/format";
 import type { TConfig } from "../../typings/ED";
 
 /**
@@ -22,7 +22,7 @@ export function initDataQualityChart(config: TConfig) {
     let state = i.length + es.length + ms.length;
     status.src = state < 10 ? config.status.green.src : state < 15 ? config.status.amber.src : config.status.red.src;
     container.title = state < 10 ? config.status.green.title : state < 15 ? config.status.amber.title : config.status.red.title;
-    let qt = `<div class="data-quality">Data availability for <b>${getScreenDate(config.querystring.day)}</b>: `;
+    let qt = `<div class="data-quality">Data availability for <b>${getMonthYear(config.querystring.day)}</b>: `;
     if (state === 0) {
       qt += `Complete.<br>All data is available in the database.`;
     } else if (state < 5) {
