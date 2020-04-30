@@ -1,11 +1,11 @@
 import type { TBreakdown } from "../../typings/ED";
-import { event, select } from "d3-selection";
+import { event } from "d3-selection";
 import { max, sum } from "d3-array";
 import { scaleLinear, scaleBand } from "d3-scale";
 import { axisBottom } from "d3-axis";
 import { format } from "d3-format";
 import { Slicer } from "@buckneri/js-lib-slicer";
-import { svg } from "../../utils/d3-utils";
+import { select, svg } from "../../../node_modules/@buckneri/spline/dist";
 
 export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const s = new Slicer(data.map(d => d.label));
@@ -19,9 +19,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const x = scaleBand().range([0, rw]).padding(0.1);
   const y = scaleLinear().range([rh, 0]);
 
-  const sg = select(node).call(
-    svg().height(height).width(width).margin(margin)
-  );
+  const sg = svg(node as HTMLElement, { height: height, margin: margin, width: width });
   const canvas = sg.select(".canvas");
 
   sg.on("click", canvasClickHandler);
