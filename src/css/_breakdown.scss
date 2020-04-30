@@ -92,3 +92,8 @@ img.ready:hover {
   margin-top: 10px;
   user-select: none;
 }
+
+::-webkit-scrollbar {
+  height: 80px;
+  width: 20px;
+}

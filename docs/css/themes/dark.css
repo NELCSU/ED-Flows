@@ -4,6 +4,19 @@ body {
   fill: #aa8;
 }
 
+tbody tr:nth-child(2n) td {
+  background-color: #444;
+}
+
+th {
+  background-color: #111;
+  border-bottom: 2px solid #222;
+}
+
+tr {
+  border-bottom: 1px solid #444;
+}
+
 .menu {
   background-color: #111;
 }
@@ -66,4 +79,12 @@ select {
   background: #444;
   border-color: #222;
   color: #aa8;
+}
+
+::-webkit-scrollbar-track {
+  background-color: #444;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ebebeb;
 }

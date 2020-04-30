@@ -10,6 +10,19 @@ body {
   fill: $color1;
 }
 
+tbody tr:nth-child(2n) td {
+  background-color: $color3;
+}
+
+th {
+  background-color: $color2;
+  border-bottom: 2px solid $color5;
+}
+
+tr {
+  border-bottom: 1px solid $color3;
+}
+
 .menu {
   background-color: $color2;
 }
@@ -72,4 +85,12 @@ select {
   background: $color3;
   border-color: $color5;
   color: $color1;
+}
+
+::-webkit-scrollbar-track {
+  background-color: $color3;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ebebeb;
 }
