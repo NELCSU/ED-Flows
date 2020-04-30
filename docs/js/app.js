@@ -6885,13 +6885,13 @@ var App = (function (exports) {
       const ticks = gAxis.selectAll(".tick");
       const text = ticks.selectAll("text");
       text.each(function () {
-          const t = select$1(this);
+          const t = select(this);
           const w = this.getBBox().width;
           if (w > x.bandwidth()) {
-              const parent = select$1(this.parentNode);
+              const parent = select(this.parentNode);
               parent.style("cursor", "pointer")
                   .on("click", function () {
-                  const tick = select$1(this);
+                  const tick = select(this);
                   tick.style("cursor", null);
                   tick.select("text")
                       .text((d) => d);
@@ -6942,9 +6942,19 @@ var App = (function (exports) {
       function highlight() {
           gbar.each(function (d) {
               const filtered = s.isFiltered(d.label);
-              return select$1(this).classed("filtered", filtered);
+              return select(this).classed("filtered", filtered);
           });
       }
+  }
+
+  function drawDataTable(node, data) {
+      let html = `<div class="table-scroll"><table>`;
+      html += `<thead><tr><th scope="col">Category</th><th scope="col">Value</th></tr></thead><tbody>`;
+      data.forEach((d) => {
+          html += `<tr><td><mark style="color:${d.color};">█</mark> ${d.label ? d.label : "No description"}</td><td>${d.value}</td></tr>`;
+      });
+      html += "</tbody></table></div>";
+      node.innerHTML = html;
   }
 
   /**
@@ -6981,6 +6991,7 @@ var App = (function (exports) {
           message.innerHTML = config.breakdown.message;
           if (config.breakdown.chart.length > 1) {
               message.innerHTML += `<div>Displaying chart ${current + 1} of ${config.breakdown.chart.length}</div>`;
+              message.innerHTML += `<h2>${config.breakdown.display[current][1]}</h2>`;
               message.innerHTML += `<div class="switch-chart">Switch to the next</div>`;
               const action = document.querySelector(".switch-chart");
               action.addEventListener("click", switchChartHandler);
@@ -7000,7 +7011,12 @@ var App = (function (exports) {
               }
               else {
                   chart.innerHTML = " ";
-                  drawColumnChart(chart, config.breakdown.chart[current]);
+                  if (config.breakdown.display[current][0] === "column") {
+                      drawColumnChart(chart, config.breakdown.chart[current]);
+                  }
+                  else {
+                      drawDataTable(chart, config.breakdown.chart[current]);
+                  }
               }
           }
           container === null || container === void 0 ? void 0 : container.classList.remove("ready");
@@ -7771,7 +7787,7 @@ var App = (function (exports) {
               selectAll("g.link")
                   .each((d, i, n) => {
                   if (d.source === dt || d.target === dt) {
-                      select$1(n[i]).select("path").classed("selected", true);
+                      select(n[i]).select("path").classed("selected", true);
                   }
               });
               selected = selectAll(".selected");
@@ -7782,7 +7798,7 @@ var App = (function (exports) {
       });
   }
   function loadSankeyChart(config) {
-      const sg = select$1("#chart > svg");
+      const sg = select("#chart > svg");
       const chart = document.getElementById("chart");
       const w = chart.clientWidth;
       const h = chart.clientHeight;
@@ -7893,30 +7909,35 @@ var App = (function (exports) {
       function linkclick(d) {
           event.stopPropagation();
           window.dispatchEvent(new CustomEvent("clear-chart"));
-          window.dispatchEvent(new CustomEvent("select-chart", { detail: select$1(this) }));
+          window.dispatchEvent(new CustomEvent("select-chart", { detail: select(this) }));
           let text = `<div>${d.source.name} → ${d.target.name} calls</div>`;
           text += `<div>Outgoing: ${formatNumber(d.value)} calls</div>`;
           config.breakdown.message = text;
           config.breakdown.chart = [];
+          config.breakdown.display = [];
           if (d.supply && d.supply.length > 0) {
               config.breakdown.chart.push(d.supply);
+              config.breakdown.display.push(["column", "Hourly breakdown"]);
           }
           if (d.supplyDx && d.supplyDx.length > 0) {
               d.supplyDx.sort(desc);
               config.breakdown.chart.push(d.supplyDx);
+              config.breakdown.display.push(["table", "Dx codes"]);
           }
           if (d.supplySG && d.supplySG.length > 0) {
               d.supplySG.sort(desc);
               config.breakdown.chart.push(d.supplySG);
+              config.breakdown.display.push(["table", "Symptom groups"]);
           }
           if (d.supplyRead && d.supplyRead.length > 0) {
               config.breakdown.chart.push(d.supplyRead);
+              config.breakdown.display.push(["table", "Read codes"]);
           }
           window.dispatchEvent(new CustomEvent("show-breakdown"));
       }
       function nodeclick(d) {
           event.stopPropagation();
-          const g = select$1(this);
+          const g = select(this);
           window.dispatchEvent(new CustomEvent("clear-chart"));
           window.dispatchEvent(new CustomEvent("select-chart", { detail: g }));
           g.select(".node-label-outer").style("opacity", null);
@@ -7978,11 +7999,14 @@ var App = (function (exports) {
           }
           config.breakdown.message = text;
           config.breakdown.chart = [];
+          config.breakdown.display = [];
           if (sumSource.length > 0) {
               config.breakdown.chart.push(sumSource.sort(desc));
+              config.breakdown.display.push(["column", "Incoming flows"]);
           }
           if (sumTarget.length > 0) {
               config.breakdown.chart.push(sumTarget.sort(desc));
+              config.breakdown.display.push(["column", "Outgoing flows"]);
           }
           window.dispatchEvent(new CustomEvent("show-breakdown"));
       }
@@ -8007,7 +8031,7 @@ var App = (function (exports) {
           }
       }
       function dragmove(d) {
-          select$1(this)
+          select(this)
               .attr("transform", function (d) {
               const dx = event.x - d.__x;
               const dy = event.y - d.__y;

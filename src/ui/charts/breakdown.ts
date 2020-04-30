@@ -1,4 +1,5 @@
 import { drawColumnChart } from "../charts/column";
+import { drawDataTable } from "../charts/table";
 import type { TConfig, TBreakdown } from "../../typings/ED";
 
 /**
@@ -41,6 +42,7 @@ export function initBreakdown(config: TConfig) {
 		message.innerHTML = config.breakdown.message;
 		if (config.breakdown.chart.length > 1) {
 			message.innerHTML += `<div>Displaying chart ${current + 1} of ${config.breakdown.chart.length}</div>`;
+			message.innerHTML += `<h2>${config.breakdown.display[current][1]}</h2>`;
 			message.innerHTML += `<div class="switch-chart">Switch to the next</div>`;
 			const action = document.querySelector(".switch-chart") as HTMLDivElement;
 			action.addEventListener("click", switchChartHandler);
@@ -61,7 +63,11 @@ export function initBreakdown(config: TConfig) {
 				chart.innerHTML = `<div><h2>${d.label}</h2><h2>${d.value} call(s) 100%</h2></div>`;
 			} else {
 				chart.innerHTML = " ";
-				drawColumnChart(chart, config.breakdown.chart[current]);
+				if (config.breakdown.display[current][0] === "column") {
+					drawColumnChart(chart, config.breakdown.chart[current]);
+				} else {
+					drawDataTable(chart, config.breakdown.chart[current]);
+				}
 			}
 		}
 

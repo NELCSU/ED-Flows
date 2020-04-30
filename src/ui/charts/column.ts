@@ -1,11 +1,11 @@
 import type { TBreakdown } from "../../typings/ED";
-import { event } from "d3-selection";
+import { event, select } from "d3-selection";
 import { max, sum } from "d3-array";
 import { scaleLinear, scaleBand } from "d3-scale";
 import { axisBottom } from "d3-axis";
 import { format } from "d3-format";
 import { Slicer } from "@buckneri/js-lib-slicer";
-import { select, svg } from "../../../node_modules/@buckneri/spline/dist";
+import { svg } from "../../../node_modules/@buckneri/spline/dist";
 
 export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const s = new Slicer(data.map(d => d.label));

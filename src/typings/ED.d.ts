@@ -85,6 +85,7 @@ interface IDictionary {
 export type TConfig = {
   breakdown: {
     chart: TBreakdown[][],
+    display: string[][],
     message: string
   },
   db: {

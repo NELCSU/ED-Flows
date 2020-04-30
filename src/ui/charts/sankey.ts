@@ -1,10 +1,10 @@
 import { formatNumber } from "../../utils/format";
 import type { TBreakdown, TConfig, TMargin, TNode, TLink } from "../../typings/ED";
 import { rgb } from "d3-color";
-import { event, selectAll } from "d3-selection";
+import { event, select, selectAll } from "d3-selection";
 import { rollup, sum } from "d3-array";
 import { drag } from "d3-drag";
-import { select, svg } from "../../../node_modules/@buckneri/spline/dist";
+import { svg } from "../../../node_modules/@buckneri/spline/dist";
 import { sankey } from "./sankey-model";
 import { scaleSequential } from "d3-scale";
 import { interpolateViridis } from "d3-scale-chromatic";
@@ -205,19 +205,25 @@ export function loadSankeyChart(config: TConfig) {
 
     config.breakdown.message = text;
     config.breakdown.chart = [];
+    config.breakdown.display = [];
+
     if (d.supply && d.supply.length > 0) {
       config.breakdown.chart.push(d.supply);
+      config.breakdown.display.push(["column", "Hourly breakdown"]);
     }
     if (d.supplyDx && d.supplyDx.length > 0) {
       d.supplyDx.sort(desc);
       config.breakdown.chart.push(d.supplyDx);
+      config.breakdown.display.push(["table", "Dx codes"]);
     }
     if (d.supplySG && d.supplySG.length > 0) {
       d.supplySG.sort(desc);
       config.breakdown.chart.push(d.supplySG);
+      config.breakdown.display.push(["table", "Symptom groups"]);
     }
     if (d.supplyRead && d.supplyRead.length > 0) {
       config.breakdown.chart.push(d.supplyRead);
+      config.breakdown.display.push(["table", "Read codes"]);
     }
 
     window.dispatchEvent(new CustomEvent("show-breakdown"));
@@ -303,11 +309,15 @@ export function loadSankeyChart(config: TConfig) {
 
     config.breakdown.message = text;
     config.breakdown.chart = [];
+    config.breakdown.display = [];
+
     if (sumSource.length > 0) {
       config.breakdown.chart.push(sumSource.sort(desc));
+      config.breakdown.display.push(["column", "Incoming flows"]);
     }
     if (sumTarget.length > 0) {
       config.breakdown.chart.push(sumTarget.sort(desc));
+      config.breakdown.display.push(["column", "Outgoing flows"]);
     }
 
     window.dispatchEvent(new CustomEvent("show-breakdown"));
