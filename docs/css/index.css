@@ -296,6 +296,7 @@ g.filtered > text {
 table {
   border-collapse: collapse;
   margin: 5px;
+  min-width: 200px;
   text-align: left;
   width: 80%;
 }
@@ -330,11 +331,11 @@ tr {
 
 .table-scroll {
   overflow-y: auto;
-  width: 90%;
+  width: 80%;
 }
 
 .mark {
-  font-size: 1.2em;
+  width: 5px;
 }
 
 img.ready {
@@ -428,6 +429,7 @@ img.ready:hover {
   height: 100%;
   margin-left: 10px;
   max-width: 30%;
+  min-width: 20%;
 }
 
 .breakdown-chart {

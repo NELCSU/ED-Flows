@@ -217,6 +217,14 @@ export function loadSankeyChart(config: TConfig) {
       config.breakdown.display.push(["table", "Dx codes"]);
     }
     if (d.supplySG && d.supplySG.length > 0) {
+      d.supplySG.forEach((d:any) => {
+        if (d.label === undefined) {
+          d.label = `Group code: ${d.Symptom_Group_Code}<br>`;
+          d.label += `${d.Symptom_Group_Description}<br>`;
+          d.label += `Discriminator: ${d.Symptom_Discriminator_Code}<br>`;
+          d.label += `${d.Symptom_Descriminator_Description}`;
+        }
+      });
       d.supplySG.sort(desc);
       config.breakdown.chart.push(d.supplySG);
       config.breakdown.display.push(["table", "Symptom groups"]);

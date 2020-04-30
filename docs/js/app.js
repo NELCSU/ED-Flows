@@ -1114,6 +1114,38 @@ var App = (function (exports) {
         : new Selection([[selector]], root);
   }
 
+  function create(name) {
+    return select(creator(name).call(document.documentElement));
+  }
+
+  var nextId = 0;
+
+  function local() {
+    return new Local;
+  }
+
+  function Local() {
+    this._ = "@" + (++nextId).toString(36);
+  }
+
+  Local.prototype = local.prototype = {
+    constructor: Local,
+    get: function(node) {
+      var id = this._;
+      while (!(id in node)) if (!(node = node.parentNode)) return;
+      return node[id];
+    },
+    set: function(node, value) {
+      return node[this._] = value;
+    },
+    remove: function(node) {
+      return this._ in node && delete node[this._];
+    },
+    toString: function() {
+      return this._;
+    }
+  };
+
   function sourceEvent() {
     var current = event, source;
     while (source = current.sourceEvent) current = source;
@@ -1157,6 +1189,39 @@ var App = (function (exports) {
 
     return null;
   }
+
+  function touches(node, touches) {
+    if (touches == null) touches = sourceEvent().touches;
+
+    for (var i = 0, n = touches ? touches.length : 0, points = new Array(n); i < n; ++i) {
+      points[i] = point(node, touches[i]);
+    }
+
+    return points;
+  }
+
+  var selection$1 = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    create: create,
+    creator: creator,
+    local: local,
+    matcher: matcher,
+    mouse: mouse,
+    namespace: namespace,
+    namespaces: namespaces,
+    clientPoint: point,
+    select: select,
+    selectAll: selectAll,
+    selection: selection,
+    selector: selector,
+    selectorAll: selectorAll,
+    style: styleValue,
+    touch: touch,
+    touches: touches,
+    window: defaultView,
+    get event () { return event; },
+    customEvent: customEvent
+  });
 
   var noop = {value: function() {}};
 
@@ -1597,7 +1662,7 @@ var App = (function (exports) {
     var schedules = node.__transition;
     if (!schedules) node.__transition = {};
     else if (id in schedules) return;
-    create(node, id, {
+    create$1(node, id, {
       name: name,
       index: index, // For context during callback.
       group: group, // For context during callback.
@@ -1630,7 +1695,7 @@ var App = (function (exports) {
     return schedule;
   }
 
-  function create(node, id, self) {
+  function create$1(node, id, self) {
     var schedules = node.__transition,
         tween;
 
@@ -6765,11 +6830,11 @@ var App = (function (exports) {
     this._parents = parents;
   }
 
-  function selection$1() {
+  function selection$2() {
     return new Selection$2([[document.documentElement]], root$1);
   }
 
-  Selection$2.prototype = selection$1.prototype = {
+  Selection$2.prototype = selection$2.prototype = {
     constructor: Selection$2,
     select: selection_select$1,
     selectAll: selection_selectAll$1,
@@ -6834,8 +6899,6 @@ var App = (function (exports) {
       if (options.margin.left === undefined) {
           options.margin.left = 10;
       }
-      const rh = options.height - options.margin.top - options.margin.bottom;
-      const rw = options.width - options.margin.left - options.margin.right;
       const svg = parent.append("svg")
           .attr("x", 0)
           .attr("y", 0)
@@ -6849,8 +6912,8 @@ var App = (function (exports) {
           .attr("clipPathUnits", "userSpaceOnUse")
           .attr("id", "clipcanvas");
       clip.append("rect")
-          .attr("height", rh)
-          .attr("width", rw)
+          .attr("height", options.height)
+          .attr("width", options.width)
           .attr("x", 0)
           .attr("y", 0);
       svg.append("g")
@@ -6860,11 +6923,12 @@ var App = (function (exports) {
       return svg;
   }
 
+  const d3 = Object.assign(selection$1);
   function drawColumnChart(node, data) {
       const s = new Slicer(data.map(d => d.label));
       const total = Math.round(sum(data, (d) => d.value));
       const f = (total === 1) ? format(".0%") : format(".0f");
-      const margin = { top: 30, right: 10, bottom: 30, left: 20 };
+      const margin = { top: 10, right: 10, bottom: 30, left: 20 };
       const width = node.clientWidth;
       const rw = width - margin.left - margin.right;
       const height = node.clientHeight;
@@ -6875,7 +6939,7 @@ var App = (function (exports) {
       const canvas = sg.select(".canvas");
       sg.on("click", canvasClickHandler);
       x.domain(data.map((d) => d.label));
-      y.domain([0, max(data, (d) => d.value)]);
+      y.domain([0, max(data, (d) => d.value) * 1.1]);
       const xAxis = axisBottom(x)
           .tickValues(x.domain().filter((d, i) => data.length < 10 ? true : !(i % 3) || i === data.length - 1));
       const gAxis = canvas.append("g")
@@ -6885,13 +6949,13 @@ var App = (function (exports) {
       const ticks = gAxis.selectAll(".tick");
       const text = ticks.selectAll("text");
       text.each(function () {
-          const t = select(this);
+          const t = d3.select(this);
           const w = this.getBBox().width;
           if (w > x.bandwidth()) {
-              const parent = select(this.parentNode);
+              const parent = d3.select(this.parentNode);
               parent.style("cursor", "pointer")
                   .on("click", function () {
-                  const tick = select(this);
+                  const tick = d3.select(this);
                   tick.style("cursor", null);
                   tick.select("text")
                       .text((d) => d);
@@ -6906,8 +6970,11 @@ var App = (function (exports) {
       const gbar = canvas.selectAll(".bar")
           .data(data).enter()
           .append("g")
-          .attr("transform", (d) => `translate(${x(d.label)},${y(d.value)})`)
-          .on("click", barClickHandler);
+          .attr("transform", (d) => `translate(${x(d.label)},${y(d.value)})`);
+      // @ts-ignore
+      gbar.each((d, i, n) => n[i].addEventListener("click", (e) => {
+          barClickHandler(d, e);
+      }));
       const rbar = gbar.append("rect")
           .attr("class", "bar")
           .attr("fill", (d) => d.color ? d.color : "steelblue")
@@ -6922,8 +6989,8 @@ var App = (function (exports) {
           .attr("x", x.bandwidth() / 2)
           .attr("y", -2)
           .text((d) => `${f(d.value)}`);
-      function barClickHandler(d) {
-          event.stopPropagation();
+      function barClickHandler(d, event) {
+          event.stopImmediatePropagation();
           if (event.ctrlKey) {
               s.toggleCumulative(d.label);
           }
@@ -6942,16 +7009,16 @@ var App = (function (exports) {
       function highlight() {
           gbar.each(function (d) {
               const filtered = s.isFiltered(d.label);
-              return select(this).classed("filtered", filtered);
+              return d3.select(this).classed("filtered", filtered);
           });
       }
   }
 
   function drawDataTable(node, data) {
       let html = `<div class="table-scroll"><table>`;
-      html += `<thead><tr><th scope="col">Category</th><th scope="col">Value</th></tr></thead><tbody>`;
+      html += `<thead><tr><th scope="col"></th><th scope="col">Category</th><th scope="col">Value</th></tr></thead><tbody>`;
       data.forEach((d) => {
-          html += `<tr><td><span class="mark" style="color:${d.color};">█</span> ${d.label ? d.label : "No description"}</td><td>${d.value}</td></tr>`;
+          html += `<tr><td class="mark" style="background-color:${d.color};"></td><td>${d.label ? d.label : "No description"}</td><td>${d.value}</td></tr>`;
       });
       html += "</tbody></table></div>";
       node.innerHTML = html;
@@ -7925,6 +7992,14 @@ var App = (function (exports) {
               config.breakdown.display.push(["table", "Dx codes"]);
           }
           if (d.supplySG && d.supplySG.length > 0) {
+              d.supplySG.forEach((d) => {
+                  if (d.label === undefined) {
+                      d.label = `Group code: ${d.Symptom_Group_Code}<br>`;
+                      d.label += `${d.Symptom_Group_Description}<br>`;
+                      d.label += `Discriminator: ${d.Symptom_Discriminator_Code}<br>`;
+                      d.label += `${d.Symptom_Descriminator_Description}`;
+                  }
+              });
               d.supplySG.sort(desc);
               config.breakdown.chart.push(d.supplySG);
               config.breakdown.display.push(["table", "Symptom groups"]);

@@ -1,5 +1,5 @@
 import type { TBreakdown } from "../../typings/ED";
-import { event, select } from "d3-selection";
+import * as selection from "d3-selection";
 import { max, sum } from "d3-array";
 import { scaleLinear, scaleBand } from "d3-scale";
 import { axisBottom } from "d3-axis";
@@ -7,11 +7,13 @@ import { format } from "d3-format";
 import { Slicer } from "@buckneri/js-lib-slicer";
 import { svg } from "../../../node_modules/@buckneri/spline/dist";
 
+const d3 = Object.assign(selection);
+
 export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const s = new Slicer(data.map(d => d.label));
   const total: number = Math.round(sum(data, (d: TBreakdown) => d.value));
   const f = (total === 1) ? format(".0%") : format(".0f");
-  const margin = { top: 30, right: 10, bottom: 30, left: 20 };
+  const margin = { top: 10, right: 10, bottom: 30, left: 20 };
   const width = node.clientWidth;
   const rw = width - margin.left - margin.right;
   const height = node.clientHeight;
@@ -25,7 +27,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   sg.on("click", canvasClickHandler);
 
   x.domain(data.map((d: TBreakdown) => d.label));
-  y.domain([0, max(data, (d: any) => d.value)]);
+  y.domain([0, max(data, (d: any) => d.value) * 1.1]);
 
   const xAxis = axisBottom(x)
     .tickValues(x.domain().filter((d, i) => data.length < 10 ? true : !(i % 3) || i === data.length - 1));
@@ -39,14 +41,14 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const text = ticks.selectAll("text");
   
   text.each(function(this: SVGTextElement) {
-    const t = select(this);
+    const t = d3.select(this);
     const w = this.getBBox().width;
     if (w > x.bandwidth()) {
-      const parent = select(this.parentNode as SVGGElement);
+      const parent = d3.select(this.parentNode as SVGGElement);
 
       parent.style("cursor", "pointer")
         .on("click", function(this: Element) {
-          const tick = select(this);
+          const tick = d3.select(this);
           tick.style("cursor", null);
           tick.select("text")
             .text((d: any) => d);
@@ -64,8 +66,12 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const gbar = canvas.selectAll(".bar")
     .data(data).enter()
     .append("g")
-      .attr("transform", (d: TBreakdown) => `translate(${x(d.label)},${y(d.value)})`)
-      .on("click", barClickHandler);
+      .attr("transform", (d: TBreakdown) => `translate(${x(d.label)},${y(d.value)})`);
+
+  // @ts-ignore
+  gbar.each((d, i, n) => n[i].addEventListener("click", (e) => {
+    barClickHandler(d, e);
+  }));
 
   const rbar = gbar.append("rect")
     .attr("class", "bar")
@@ -84,8 +90,8 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
     .attr("y", -2)
     .text((d: TBreakdown) => `${f(d.value)}`);
 
-  function barClickHandler(d: TBreakdown) {
-    event.stopPropagation();
+  function barClickHandler(d: TBreakdown, event: MouseEvent) {
+    event.stopImmediatePropagation();
     if (event.ctrlKey) {
       s.toggleCumulative(d.label);
     } else if (event.shiftKey) {
@@ -104,7 +110,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   function highlight() {
     gbar.each(function(this: SVGGElement, d: TBreakdown) {
       const filtered: boolean = s.isFiltered(d.label);
-      return select(this).classed("filtered", filtered);
+      return d3.select(this).classed("filtered", filtered);
     });
   }
 }
