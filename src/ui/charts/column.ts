@@ -1,13 +1,11 @@
 import type { TBreakdown } from "../../typings/ED";
-import * as selection from "d3-selection";
+import { select } from "d3-selection";
 import { max, sum } from "d3-array";
 import { scaleLinear, scaleBand } from "d3-scale";
 import { axisBottom } from "d3-axis";
 import { format } from "d3-format";
 import { Slicer } from "@buckneri/js-lib-slicer";
 import { svg } from "../../../node_modules/@buckneri/spline/dist";
-
-const d3 = Object.assign(selection);
 
 export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const s = new Slicer(data.map(d => d.label));
@@ -21,7 +19,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const x = scaleBand().range([0, rw]).padding(0.1);
   const y = scaleLinear().range([rh, 0]);
 
-  const sg = svg(node as HTMLElement, { height: height, margin: margin, width: width });
+  const sg = select(svg(node as HTMLElement, { height: height, margin: margin, width: width }) as any);
   const canvas = sg.select(".canvas");
 
   sg.on("click", canvasClickHandler);
@@ -41,14 +39,14 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const text = ticks.selectAll("text");
   
   text.each(function(this: SVGTextElement) {
-    const t = d3.select(this);
+    const t = select(this);
     const w = this.getBBox().width;
     if (w > x.bandwidth()) {
-      const parent = d3.select(this.parentNode as SVGGElement);
+      const parent = select(this.parentNode as SVGGElement);
 
       parent.style("cursor", "pointer")
         .on("click", function(this: Element) {
-          const tick = d3.select(this);
+          const tick = select(this);
           tick.style("cursor", null);
           tick.select("text")
             .text((d: any) => d);
@@ -110,7 +108,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   function highlight() {
     gbar.each(function(this: SVGGElement, d: TBreakdown) {
       const filtered: boolean = s.isFiltered(d.label);
-      return d3.select(this).classed("filtered", filtered);
+      return select(this).classed("filtered", filtered);
     });
   }
 }
