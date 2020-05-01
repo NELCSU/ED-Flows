@@ -6107,12 +6107,70 @@ var App = (function (exports) {
 
   function drawDataTable(node, data) {
       let html = `<div class="table-scroll"><table>`;
-      html += `<thead><tr><th scope="col"></th><th scope="col">Category</th><th scope="col">Value</th></tr></thead><tbody>`;
+      html += `<thead><tr><th scope="col"></th>`;
+      html += `<th scope="col" class="column-sort" title="Click to sort on this column">Category</th>`;
+      html += `<th scope="col" class="column-sort" title="Click to sort on this column">Value</th>`;
+      html += `</tr></thead>`;
+      html += `<tbody>`;
       data.forEach((d) => {
-          html += `<tr><td class="mark" style="background-color:${d.color};"></td><td>${d.label ? d.label : "No description"}</td><td>${d.value}</td></tr>`;
+          html += `<tr>`;
+          html += `<td class="mark" style="background-color:${d.color};"></td>`;
+          html += `<td>${d.label ? d.label : "No description"}</td><td>${d.value}</td>`;
+          html += `</tr>`;
       });
-      html += "</tbody></table></div>";
+      html += `</tbody></table></div>`;
       node.innerHTML = html;
+      addSorting(node);
+  }
+  function addSorting(node) {
+      const isDate = (d) => { try {
+          return !isNaN((new Date(d)).getTime());
+      }
+      catch (_a) { } return false; };
+      const table = node.querySelector("table");
+      const columns = [].slice.call(table.querySelectorAll("th"));
+      columns.forEach((col, i) => {
+          if (col.classList.contains("column-sort")) {
+              col.addEventListener("click", (e) => {
+                  const el = e.target;
+                  let cl = el.classList.contains("asc") ? "desc" : "asc";
+                  columns.forEach((c) => c.classList.remove("asc", "desc"));
+                  el.classList.add(cl);
+                  const cellIndex = el.cellIndex;
+                  const rows = [].slice.call(table.tBodies[0].rows);
+                  rows.sort((a, b) => {
+                      let index;
+                      let cellA = a.cells[cellIndex];
+                      let cellB = b.cells[cellIndex];
+                      let testA, testB;
+                      if (!isNaN(cellA.textContent || "") && !isNaN(cellB.textContent || "")) {
+                          testA = +(cellA.textContent || 0);
+                          testB = +(cellB.textContent || 0);
+                      }
+                      else if (isDate(cellA.textContent || "") && isDate(cellB.textContent || "")) {
+                          testA = new Date(cellA.textContent);
+                          testB = new Date(cellB.textContent);
+                      }
+                      else {
+                          testA = cellA.textContent || "";
+                          testB = cellB.textContent || "";
+                      }
+                      if (cl === "asc") {
+                          index = testA > testB ? 1 : -1;
+                      }
+                      else {
+                          index = testA < testB ? 1 : -1;
+                      }
+                      return index;
+                  });
+                  rows.forEach((row) => {
+                      var _a;
+                      (_a = row.parentNode) === null || _a === void 0 ? void 0 : _a.removeChild(row);
+                      table.tBodies[0].appendChild(row);
+                  });
+              });
+          }
+      });
   }
 
   /**

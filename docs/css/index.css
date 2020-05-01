@@ -338,6 +338,22 @@ tr {
   width: 5px;
 }
 
+.column-sort {
+  cursor: pointer;
+}
+
+.column-sort::after {
+  content: "  ";
+}
+
+.column-sort.asc::after {
+  content: " 🠕";
+}
+
+.column-sort.desc::after {
+  content: " 🠗";
+}
+
 img.ready {
   cursor: pointer;
   filter: opacity(30%);

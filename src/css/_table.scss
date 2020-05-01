@@ -44,3 +44,19 @@ tr {
 .mark {
   width: 5px;
 }
+
+.column-sort {
+  cursor: pointer;
+}
+
+.column-sort::after {
+  content: "\00A0\00A0";
+}
+
+.column-sort.asc::after {
+  content: "\00A0\1F815";
+}
+
+.column-sort.desc::after {
+  content: "\00A0\1F817";
+}
