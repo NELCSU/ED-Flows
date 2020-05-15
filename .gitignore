@@ -2,13 +2,7 @@ logs
 *.log
 npm-debug.log*
 .npm
-coverage
-.rpt2_cache
-build
-dist
 node_modules
 .npm
-.vscode
 npm-debug.log
 package-lock.json
-private

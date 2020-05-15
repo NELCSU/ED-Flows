@@ -1,12 +1,12 @@
 @charset "UTF-8";
 html,
 body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
   font-family: "Trebuchet MS", "Open Sans", "Segoe UI light", "Verdana", "Tahoma", "Helvetica", sans-serif;
+  height: 100%;
+  margin: 0;
   overflow: hidden;
+  padding: 0;
+  width: 100%;
 }
 
 svg {
@@ -50,10 +50,10 @@ a:focus {
 }
 
 .flex-center {
+  align-items: flex-start;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: flex-start;
   justify-content: center;
 }
 
@@ -62,17 +62,17 @@ a:focus {
 }
 
 .loading {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   height: 100%;
-  width: 100%;
+  justify-content: center;
   left: 0;
   position: fixed;
+  text-align: center;
   top: 0;
+  width: 100%;
   z-index: 0;
 }
 
@@ -82,13 +82,13 @@ a:focus {
 }
 
 #chart {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
+  height: 100%;
   justify-content: center;
   text-align: center;
-  height: 100%;
   width: 100%;
 }
 
@@ -96,12 +96,12 @@ a:focus {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  transition: opacity 500ms ease-in-out;
   height: 100%;
-  width: 100%;
   left: 0;
   position: absolute;
   top: 0;
+  transition: opacity 500ms ease-in-out;
+  width: 100%;
 }
 
 .pagetitle {
@@ -114,20 +114,20 @@ a:focus {
 }
 
 #titlebar {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
   height: 7%;
   justify-content: space-between;
   width: 100%;
 }
 
 .titlebar-item {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
   height: 100%;
   justify-content: flex-start;
 }
@@ -171,13 +171,13 @@ option:hover {
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  transition: all 500ms ease-in-out;
   line-height: 26px;
   min-width: 220px;
   padding: 15px;
   position: fixed;
   right: 0;
   top: 40px;
+  transition: all 500ms ease-in-out;
   width: 25%;
   z-index: 600000;
 }
@@ -185,27 +185,33 @@ option:hover {
 .menu.ready {
   cursor: not-allowed;
   pointer-events: none;
-  user-select: none;
   transform: translateX(100%);
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 .menu-button {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   font-weight: bold;
+  justify-content: center;
   padding: 5px;
-  user-select: none;
+  text-align: center;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 .panel-row {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
   justify-content: space-between;
   min-height: 1.3em;
 }
@@ -269,20 +275,23 @@ text.chart-legend {
 .axis path,
 .axis line {
   fill: none;
-  stroke: #000;
   shape-rendering: crispEdges;
+  stroke: #000;
 }
 
 rect.bar {
-  transition: all 500ms ease-in-out;
   cursor: pointer;
+  transition: all 500ms ease-in-out;
 }
 
 text.bar {
-  transition: all 500ms ease-in-out;
   font-size: 0.8em;
   text-anchor: middle;
-  user-select: none;
+  transition: all 500ms ease-in-out;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 g.filtered > rect {
@@ -319,6 +328,7 @@ th {
   font-size: 1.2em;
   font-weight: bold;
   padding: 10px 8px;
+  position: -webkit-sticky;
   position: sticky;
   top: 0;
   z-index: 2;
@@ -356,22 +366,24 @@ tr {
 
 img.ready {
   cursor: pointer;
-  filter: opacity(30%);
+  -webkit-filter: opacity(30%);
+          filter: opacity(30%);
 }
 
 img.ready:hover {
-  filter: opacity(60%);
+  -webkit-filter: opacity(60%);
+          filter: opacity(60%);
 }
 
 .breakdown {
+  bottom: 0;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  transition: all 500ms ease-in-out;
-  bottom: 0;
   height: 33%;
   left: 0;
   position: fixed;
+  transition: all 500ms ease-in-out;
   width: 100%;
   z-index: 600000;
 }
@@ -385,10 +397,10 @@ img.ready:hover {
 }
 
 .breakdown-bar {
+  align-items: center;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
   justify-content: space-between;
   left: 0;
   position: absolute;
@@ -402,18 +414,18 @@ img.ready:hover {
 }
 
 .breakdown-close {
+  align-items: center;
+  cursor: pointer;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  cursor: pointer;
   font-size: 24px;
   font-weight: bold;
   height: 20px;
+  justify-content: center;
   position: absolute;
   right: 5px;
+  text-align: center;
   top: 5px;
   width: 20px;
 }
@@ -425,27 +437,27 @@ img.ready:hover {
 
 .breakdown-message,
 .breakdown-chart {
+  align-items: center;
   display: flex;
   flex-direction: column;
+  flex-grow: 1;
   flex-wrap: nowrap;
-  align-items: center;
+  height: 100%;
   justify-content: center;
   text-align: center;
-  flex-grow: 1;
-  height: 100%;
 }
 
 .breakdown-message {
+  align-items: center;
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
   height: 100%;
+  justify-content: center;
   margin-left: 10px;
   max-width: 30%;
   min-width: 20%;
+  text-align: center;
 }
 
 .breakdown-chart {
@@ -456,7 +468,10 @@ img.ready:hover {
 .switch-chart {
   cursor: pointer;
   margin-top: 10px;
-  user-select: none;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+      -ms-user-select: none;
+          user-select: none;
 }
 
 ::-webkit-scrollbar {
