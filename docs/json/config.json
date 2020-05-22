@@ -14,8 +14,8 @@
   "environment": "DEVELOPMENT",
   "filters": {
     "calls": [
-      {"group": "Scope","id": "b00", "name": "r1","title": "System level","value": "00"},
-      {"group": "Scope","id": "b01", "name": "r1", "title": "Provider level", "value": "01"},
+      {"group": "Scope","id": "b00","name": "r1","title": "System level","value": "00"},
+      {"group": "Scope","id": "b01","name": "r1", "title": "Provider level", "value": "01"},
       {"group": "Calls","id": "b10","name": "r1","title": "All calls","value": "10"},
       {"group": "Calls","id": "b11","name": "r1","title": "COVID-19 calls","value": "11"},
       {"group": "Calls","id": "b12","name": "r1","title": "Non-COVID-19 calls","value": "12"},
@@ -23,46 +23,19 @@
     ],
     "days": [],
     "density": 5,
-    "move": {
-      "x": true,
-      "y": true
-    },
-    "opacity": {
-      "high": 0.9,
-      "low": 0.3
-    },
-    "orientation": {
-      "ltr": true,
-      "ttb": false
-    },
+    "move": { "x": true, "y": true },
+    "opacity": { "high": 0.9, "low": 0.3 },
+    "orientation": { "ltr": true, "ttb": false },
     "organisations": ["NCL", "NEL", "NWL", "SEL", "SWL"]
   },
-  "legend": [
-    {
-      "color": [],
-      "label": []
-    }
-  ],
-  "querystring": {
-    "call": "",
-    "day": "",
-    "organisation": ""
-  },
+  "legend": [{ "color": [], "label": [] }],
+  "querystring": { "call": "", "day": "", "organisation": "" },
   "sankey": null,
   "status": {
-    "amber": {
-      "src": "./images/square.svg", 
-      "title": "Amber status"
-    },
-    "green": {
-      "src": "./images/circle.svg", 
-      "title": "Green status"
-    },
+    "amber": {"src": "./images/square.svg", "title": "Amber status"},
+    "green": {"src": "./images/circle.svg", "title": "Green status"},
     "message": "",
-    "red": {
-      "src": "./images/triangle.svg", 
-      "title": "Red status"
-    }
+    "red": {"src": "./images/triangle.svg", "title": "Red status"}
   },
   "themes": ["light", "dark"]
 }

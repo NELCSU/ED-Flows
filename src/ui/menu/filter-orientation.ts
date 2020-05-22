@@ -15,6 +15,6 @@ export function initSankeyNodeOrientation(config: TConfig) {
 	function handleClick() {
 		config.filters.orientation.ltr = ltr.checked;
 		config.filters.orientation.ttb = ttb.checked;
-		window.dispatchEvent(new CustomEvent("sankey-chart-rebuild"));
+		window.dispatchEvent(new CustomEvent("filter-action"));
 	}
 }

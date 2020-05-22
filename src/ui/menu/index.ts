@@ -1,7 +1,6 @@
 import { initUIThemes } from "./filter-theme";
 import { initCallList } from "./filter-call";
 import { initDensitySlider } from "./filter-density";
-import { initOpacitySlider } from "./filter-opacity";
 import { initSankeyLegend } from "./filter-legend";
 import { initSankeyNodeMovement } from "./filter-move-nodes";
 import { initSankeyNodeOrientation } from "./filter-orientation";
@@ -29,13 +28,13 @@ export function initMenu(config: TConfig) {
   initDayList(config);
   initCallList(config);
   initDensitySlider(config);
-  initOpacitySlider(config);
   initSankeyLegend(config);
   initSankeyNodeMovement(config);
   initSankeyNodeOrientation(config);
   initUIThemes(config);
 
   window.addEventListener("hide-menu", () => menu.classList.add("ready"));
+
   window.addEventListener("filter-action", () => {
     window.dispatchEvent(new CustomEvent("data-quality"));
     setQueryHash(config);
@@ -52,5 +51,10 @@ export function initMenu(config: TConfig) {
             window.dispatchEvent(new CustomEvent("sankey-chart"));
           });
       });
+  });
+
+  window.addEventListener("soft-filter-action", () => {
+    config.sankey.nodeMoveX = config.filters.move.x;
+    config.sankey.nodeMoveY = config.filters.move.y;
   });
 }

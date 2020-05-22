@@ -1,6 +1,6 @@
 import { initBreakdown } from "./breakdown";
 import { initDataQualityChart } from "./data-quality";
-import { initSankeyChart } from "./sankey";
+import { initSankeyChart } from "./sankey-chart";
 import type { TConfig } from "../../typings/ED";
 
 /**

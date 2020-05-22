@@ -1,5 +1,3 @@
-import type { TPoint } from "../typings/ED";
-
 /**
  * Generates a file to download in the client
  * @param text - content to add to file

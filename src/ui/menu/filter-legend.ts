@@ -1,5 +1,5 @@
 
-import type { TConfig, TPoint } from "../../typings/ED";
+import type { TConfig, TPoint, TMargin } from "../../typings/ED";
 import { event, select } from "d3-selection";
 import { drag } from "d3-drag";
 import { transition } from "d3-transition";
@@ -64,14 +64,13 @@ export function initSankeyLegend(config: TConfig) {
 		const w = box.width;
 		const rh: number = config.legend.map(leg => leg.label.length * 26).reduce((ac, le) => ac + le, 0);
 		const rw: number = 250;
-		const m = config.sankey.margin();
-		const nw = config.sankey.nodeWidth() / 2;
+		const m: TMargin = { bottom: 10, left: 20, right: 20, top: 10 };
 
 		// determine the least node dense area of chart
 		let xy: number[][] = [];
 		const nodes = canvas.selectAll("g.node").data();
 		nodes.forEach((d: any) => {
-			xy.push([d.x1 - nw, d.y1 - (d.y0 / 2)] as any);
+			xy.push([d.x, d.y] as any);
 		});
 		const delaunay = Delaunay.from(xy);
 		const voronoi = delaunay.voronoi([-1, -1, w - m.left - m.right + 1, h - m.top - m.bottom + 1]);
