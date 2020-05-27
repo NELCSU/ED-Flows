@@ -11097,7 +11097,6 @@ var App = (function (exports) {
       constructor(options) {
           this.container = document.querySelector("body");
           this.h = 200;
-          this.linkGenerator = () => true;
           this.links = [];
           this.margin = { bottom: 20, left: 20, right: 30, top: 20 };
           this.nodeMoveX = true;
@@ -11106,12 +11105,13 @@ var App = (function (exports) {
           this.nodeSize = 20;
           this.orient = "horizontal";
           this.padding = 5;
+          this.playback = false;
           this.rh = 160;
           this.rw = 150;
           this.w = 200;
           this._extent = [0, 0]; // min/max node values
-          this._stepX = []; // available gaps across x-axis
-          this._stepY = []; // available gaps across y-axis
+          this._linkGenerator = () => true;
+          this._layerGap = 0;
           this._totalLayers = 0;
           if (options.margin !== undefined) {
               this.margin = options.margin;
@@ -11139,20 +11139,26 @@ var App = (function (exports) {
           if (options.orient !== undefined) {
               this.orient = options.orient;
           }
+          if (options.playback !== undefined) {
+              this.playback = options.playback;
+          }
           this.data(options.nodes, options.links)
               .initialise();
       }
-      data(nodes, links) {
-          this._initNodeLink(nodes, links);
-          return this;
-      }
-      canvasClickHandler(el) {
-          event$1.stopPropagation();
-          this.clearSelection();
-          window.dispatchEvent(new CustomEvent("clear-selected", { detail: el }));
-      }
+      /**
+       * Clears selection from Sankey
+       */
       clearSelection() {
           selectAll(".selected").classed("selected", false);
+          return this;
+      }
+      /**
+       * Saves data into Sankey
+       * @param nodes - Sankey nodes
+       * @param links - Sankey links
+       */
+      data(nodes, links) {
+          this._initDataStructure(nodes, links);
           return this;
       }
       /**
@@ -11162,22 +11168,202 @@ var App = (function (exports) {
           select$1(this.container).select("svg").remove();
           return this;
       }
+      /**
+       * draws the Sankey
+       */
       draw() {
-          this.drawCanvas();
-          this.drawLinks();
-          this.drawNodes();
-          this.drawLabels();
+          this._drawCanvas();
+          this._drawLinks();
+          this._drawNodes();
+          this._drawLabels();
           return this;
       }
-      drawCanvas() {
+      /**
+       * Recalculate internal values
+       */
+      initialise() {
+          this._nodeValueLayer();
+          this._setScale();
+          this._setNodeSize();
+          this._positionNodeByLayer();
+          this._positionNodeInLayer();
+          this._positionLinks();
+          return this;
+      }
+      /**
+       * Serialise the Sankey data
+       */
+      toString() {
+          let nodes = this.nodes.map(n => `${n.name}: ${n.value} (L: ${n.layer})`).join("\n");
+          let links = this.links.map(l => `${l.nodeIn.name}->${l.nodeOut.name}`).join("\n");
+          return `nodes:\n${nodes}\n\nlinks:\n${links}`;
+      }
+      // ***** PRIVATE METHODS
+      /**
+       * Positions links relative to sourcec and destination nodes
+       */
+      _positionLinks() {
+          // sort: by size then by a-z name
+          this.links.sort((a, b) => b.value - a.value || (b.nodeIn.name > a.nodeIn.name ? -1 : 1));
+          const source = new Map();
+          const target = new Map();
+          this.links.forEach((link) => {
+              let src = 0, tgt = 0;
+              link.w = Math.max(1, this._scale(link.value));
+              if (!source.has(link.nodeIn.id)) {
+                  source.set(link.nodeIn.id, (this.orient === "horizontal") ? link.nodeIn.y : link.nodeIn.x);
+              }
+              if (!target.has(link.nodeOut.id)) {
+                  target.set(link.nodeOut.id, (this.orient === "horizontal") ? link.nodeOut.y : link.nodeOut.x);
+              }
+              src = source.get(link.nodeIn.id);
+              link.y0 = src + (link.w / 2);
+              tgt = target.get(link.nodeOut.id);
+              link.y1 = tgt + (link.w / 2);
+              source.set(link.nodeIn.id, link.y0 + (link.w / 2));
+              target.set(link.nodeOut.id, link.y1 + (link.w / 2));
+          });
+      }
+      /**
+       * spreads the nodes across the chart space by layer
+       */
+      _positionNodeByLayer() {
+          if (this.orient === "horizontal") {
+              this.nodes.forEach((node) => {
+                  node.x = node.layer * this._layerGap;
+                  if (node.x >= this.rw) {
+                      node.x -= this.nodeSize;
+                  }
+                  else if (node.x < 0) {
+                      node.x = 0;
+                  }
+              });
+          }
+          else {
+              this.nodes.forEach((node) => {
+                  node.y = node.layer * this._layerGap;
+                  if (node.y >= this.rh) {
+                      node.y -= this.nodeSize;
+                  }
+                  else if (node.y < 0) {
+                      node.y = 0;
+                  }
+              });
+          }
+      }
+      /**
+       * spreads the nodes within layer
+       */
+      _positionNodeInLayer() {
+          let layer = -1, n = 0;
+          let layerTracker = [];
+          if (this.orient === "horizontal") {
+              this.nodes.forEach((node) => {
+                  if (layer === node.layer) {
+                      node.y = n;
+                      n += node.h + this.padding;
+                      layerTracker[layer].sum = n;
+                      layerTracker[layer].nodes.push(node);
+                  }
+                  else {
+                      layer = node.layer;
+                      node.y = 0;
+                      n = node.h + this.padding;
+                      layerTracker.push({ nodes: [node], sum: n, total: this.rh });
+                  }
+              });
+          }
+          else {
+              this.nodes.forEach((node) => {
+                  if (layer === node.layer) {
+                      node.x = n;
+                      n += node.w + this.padding;
+                      layerTracker[layer].sum = n;
+                      layerTracker[layer].nodes.push(node);
+                  }
+                  else {
+                      layer = node.layer;
+                      node.x = 0;
+                      n = node.w + this.padding;
+                      layerTracker.push({ nodes: [node], sum: n, total: this.rw });
+                  }
+              });
+          }
+          // 2nd pass to widen out layers too tightly clustered together
+          layerTracker.forEach(layer => {
+              if (layer.sum * 1.2 < layer.total && layer.nodes.length > 1) {
+                  const customPad = ((layer.total - layer.sum) * 0.75) / layer.nodes.length;
+                  layer.nodes.forEach((node, i) => {
+                      if (this.orient === "horizontal") {
+                          node.y += (i + 1) * customPad;
+                      }
+                      else {
+                          node.x += (i + 1) * customPad;
+                      }
+                  });
+              }
+          });
+      }
+      /**
+       * Sets height and width of node
+       */
+      _setNodeSize() {
+          this.nodes.forEach((node) => {
+              if (this.orient === "horizontal") {
+                  node.h = this._scale(node.value);
+                  node.w = this.nodeSize;
+              }
+              else {
+                  node.h = this.nodeSize;
+                  node.w = this._scale(node.value);
+              }
+          });
+      }
+      /**
+       * Determines the scale and layer gap of nodes
+       */
+      _setScale() {
+          this._calcScalingExtent();
+          this._calcScaling();
+      }
+      /**
+       * Calculates the chart scale
+       */
+      _calcScaling() {
+          const rng = [0, this.orient === "horizontal" ? this.rh : this.rw];
+          this._scale = linear$1$1()
+              .domain([0, this._extent[1]])
+              .range(rng);
+      }
+      /**
+       * Determines the minimum and maximum extent values to scale nodes by
+       */
+      _calcScalingExtent() {
+          this._extent[0] = this.nodes.reduce((ac, n) => (ac === undefined || n.value < ac) ? n.value : ac, 0);
+          let max = this._extent[0], layer = 0, runningTotal = 0;
+          this.nodes.forEach((node) => {
+              if (node.layer === layer) {
+                  runningTotal += node.value;
+              }
+              else {
+                  layer = node.layer;
+                  max = runningTotal > max ? runningTotal : max;
+                  runningTotal = node.value;
+              }
+          });
+          this._extent[1] = (runningTotal > max ? runningTotal : max) + (this.padding * (this.nodes.length * 2.5));
+      }
+      _drawCanvas() {
           const sg = svg$1(this.container, {
               height: this.h,
               margin: this.margin,
               width: this.w
           });
+          sg.classList.add("sankey");
+          sg.id = "sankey" + Array.from(document.querySelectorAll(".sankey")).length;
           select$1(sg).on("click", () => this.clearSelection());
       }
-      drawLabels() {
+      _drawLabels() {
           const canvas = select$1(this.container).select(".canvas");
           const nodes = canvas.selectAll("g.node");
           const outerLabel = nodes.append("text")
@@ -11228,17 +11414,19 @@ var App = (function (exports) {
               innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
           }
       }
-      drawLinks() {
-          const canvas = select$1(this.container).select(".canvas");
+      _drawLinks() {
+          const svg = select$1(this.container).select("svg");
+          const id = svg.node().id;
+          const canvas = svg.select(".canvas");
           if (this.orient === "horizontal") {
-              this.linkGenerator = linkHorizontal()
+              this._linkGenerator = linkHorizontal()
                   .source((d) => [d.nodeIn.x + this.nodeSize, d.y0])
                   .target((d) => [d.nodeOut.x, d.y1])
                   .x((d) => d[0])
                   .y((d) => d[1]);
           }
           else {
-              this.linkGenerator = linkVertical()
+              this._linkGenerator = linkVertical()
                   .source((d) => [d.y0, d.nodeIn.y + this.nodeSize])
                   .target((d) => [d.y1, d.nodeOut.y])
                   .x((d) => d[0])
@@ -11249,8 +11437,9 @@ var App = (function (exports) {
               .data(this.links)
               .enter()
               .append("g")
+              .attr("id", d => `${id}_${d.id}`)
               .attr("class", "link")
-              .on("click", (d) => this.linkClickHandler(event$1.target));
+              .on("click", (d) => this._linkClickHandler(event$1.target));
           const path = linkCollection
               .append("path")
               .attr("class", "link")
@@ -11262,15 +11451,18 @@ var App = (function (exports) {
           const t = transition$1().duration(600);
           path.transition(t).delay(1000)
               // @ts-ignore
-              .attr("d", d => this.linkGenerator(d));
+              .attr("d", d => this._linkGenerator(d));
       }
-      drawNodes() {
+      _drawNodes() {
           const self = this;
-          const canvas = select$1(this.container).select(".canvas");
+          const svg = select$1(this.container).select("svg");
+          const id = svg.node().id;
+          const canvas = svg.select(".canvas");
           const nodes = canvas.append("g")
               .selectAll("g.node")
               .data(this.nodes).enter()
               .append("g")
+              .attr("id", d => `${id}_${d.id}`)
               .attr("class", "node")
               .attr("transform", d => {
               return this.orient === "horizontal"
@@ -11283,11 +11475,11 @@ var App = (function (exports) {
               .on("start", dragstart)
               .on("drag", dragmove)
               .on("end", dragend))
-              .on("click", () => this.nodeClickHandler(event$1.currentTarget));
+              .on("click", () => this._nodeClickHandler(event$1.currentTarget));
           const rect = nodes.append("rect")
               .attr("class", "node")
-              .attr("height", (d) => Math.max(1, (this.orient === "horizontal" ? this._scale(d.value) : this.nodeSize)) + "px")
-              .attr("width", (d) => Math.max(1, (this.orient === "horizontal" ? this.nodeSize : this._scale(d.value))) + "px")
+              .attr("height", (d) => d.h + "px")
+              .attr("width", (d) => d.w + "px")
               .attr("fill", (d) => d.fill)
               .attr("x", 0)
               .attr("y", 0)
@@ -11334,9 +11526,9 @@ var App = (function (exports) {
                   }
                   return `translate(${d.x}, ${d.y})`;
               });
-              self._adjustLinks();
+              self._positionLinks();
               selectAll("path.link")
-                  .attr("d", d => self.linkGenerator(d));
+                  .attr("d", d => self._linkGenerator(d));
           }
           function dragend(d) {
               delete d.__x;
@@ -11347,27 +11539,42 @@ var App = (function (exports) {
               delete d.__y1;
           }
       }
-      initialise() {
-          this._nodeValueLayer();
-          this._calculations();
-          if (this.orient === "horizontal") {
-              this._adjustNodesHX();
-              this._adjustNodesHY();
-          }
-          else {
-              this._adjustNodesVY();
-              this._adjustNodesVX();
-          }
-          this._adjustLinks();
-          return this;
+      /**
+       * Creates the initial data structures
+       */
+      _initDataStructure(nodes, links) {
+          nodes.forEach((node, i) => {
+              const n = node;
+              n.h = 0; // height
+              n.id = i;
+              n.layer = -1; // denotes membership to a visual grouping
+              n.linksIn = []; // replaces source in other sankey models
+              n.linksOut = []; // ditto target
+              n.w = 0; // width
+              n.x = 0; // position onscreen
+              n.y = 0;
+              this.nodes.push(n);
+          });
+          links.forEach((link, i) => {
+              const l = link;
+              l.nodeIn = this.nodes[link.source]; // replaces source in other sankey models
+              l.nodeOut = this.nodes[link.target]; // ditto target
+              l.id = `${l.nodeIn.id}->${l.nodeOut.id}`;
+              l.w = 0; // width
+              l.y0 = 0; // value at source node (horizontal: top right y, vertical: bottom left x)
+              l.y1 = 0; // value at target node (horizontal: bottom left y, vertical; top right x)
+              this.links.push(l);
+              this.links[i].nodeIn.linksOut.push(this.links[i]);
+              this.links[i].nodeOut.linksIn.push(this.links[i]);
+          });
       }
-      linkClickHandler(el) {
+      _linkClickHandler(el) {
           event$1.stopPropagation();
           this.clearSelection();
           window.dispatchEvent(new CustomEvent("link-selected", { detail: el }));
           select$1(el).classed("selected", true);
       }
-      nodeClickHandler(el) {
+      _nodeClickHandler(el) {
           event$1.stopPropagation();
           this.clearSelection();
           const dt = select$1(el).datum();
@@ -11379,176 +11586,9 @@ var App = (function (exports) {
               }
           });
       }
-      redraw() {
-          this.destroy().initialise().draw();
-          return this;
-      }
-      toString() {
-          let nodes = this.nodes.map(n => `${n.name}: ${n.value} (L: ${n.layer})`).join("\n");
-          let links = this.links.map(l => `${l.nodeIn.name}->${l.nodeOut.name}`).join("\n");
-          return `nodes:\n${nodes}\n\nlinks:\n${links}`;
-      }
       /**
-       * Currently in horizontal orientations
-       * y0 is the top y value of link at source node
-       * y1 is the bottom y value of link at target node
+       * Determines each node dimension and layer attribution and finally determines node order within layer
        */
-      _adjustLinks() {
-          // sort: by size then by a-z name
-          this.links.sort((a, b) => b.value - a.value || (b.nodeIn.name > a.nodeIn.name ? -1 : 1));
-          const source = new Map();
-          const target = new Map();
-          this.links.forEach((link) => {
-              let src = 0, tgt = 0;
-              link.w = Math.max(1, this._scale(link.value));
-              if (!source.has(link.nodeIn.id)) {
-                  source.set(link.nodeIn.id, (this.orient === "horizontal") ? link.nodeIn.y : link.nodeIn.x);
-              }
-              if (!target.has(link.nodeOut.id)) {
-                  target.set(link.nodeOut.id, (this.orient === "horizontal") ? link.nodeOut.y : link.nodeOut.x);
-              }
-              src = source.get(link.nodeIn.id);
-              link.y0 = src + (link.w / 2);
-              tgt = target.get(link.nodeOut.id);
-              link.y1 = tgt + (link.w / 2);
-              source.set(link.nodeIn.id, link.y0 + (link.w / 2));
-              target.set(link.nodeOut.id, link.y1 + (link.w / 2));
-          });
-      }
-      _adjustNodesHX() {
-          this.nodes.forEach((node) => {
-              node.h = this._scale(node.value);
-              node.w = this.nodeSize;
-              node.x = node.layer * this._stepX[0];
-              if (node.x >= this.rw) {
-                  node.x -= this.nodeSize;
-              }
-              else if (node.x < 0) {
-                  node.x = 0;
-              }
-          });
-      }
-      _adjustNodesHY() {
-          let y = 0, layer = 0, shiftColumn = false;
-          this.nodes.forEach((node) => {
-              if (layer === node.layer) {
-                  if (y + node.h > this.rh) { // does this node go beyond the bounds?
-                      shiftColumn = true;
-                      y = node.h + this.padding;
-                  }
-                  if (shiftColumn) {
-                      node.x -= (node.w * 5);
-                  }
-                  node.y = y;
-                  y += node.h + this.padding;
-              }
-              else {
-                  shiftColumn = false;
-                  layer = node.layer;
-                  node.y = 0;
-                  y = node.h + this.padding;
-              }
-          });
-      }
-      _adjustNodesVX() {
-          let x = 0, layer = 0, shiftColumn = false;
-          this.nodes.forEach((node) => {
-              node.w = this._scale(node.value);
-              if (layer === node.layer) {
-                  if (x + node.w > this.rw) { // does this node go beyond the bounds?
-                      shiftColumn = true;
-                      x = node.w + this.padding;
-                  }
-                  if (shiftColumn) {
-                      node.y -= (node.h * 2.5);
-                  }
-                  node.x = x;
-                  x += node.w + this.padding;
-              }
-              else {
-                  shiftColumn = false;
-                  layer = node.layer;
-                  node.x = 0;
-                  x = node.w + this.padding;
-              }
-          });
-      }
-      _adjustNodesVY() {
-          this.nodes.forEach((node) => {
-              node.h = this.nodeSize;
-              node.w = this._scale(node.value);
-              node.y = node.layer * this._stepY[0];
-              if (node.y >= this.rh) {
-                  node.y -= this.nodeSize;
-              }
-              else if (node.y < 0) {
-                  node.y = 0;
-              }
-          });
-      }
-      _calculations() {
-          // minimum number
-          this._extent[0] = this.nodes.reduce((ac, n) => (ac === undefined || n.value < ac) ? n.value : ac, 0);
-          // maximum number
-          let max = this._extent[0], layer = 0, runningTotal = 0;
-          this.nodes.forEach((node) => {
-              if (node.layer === layer) {
-                  runningTotal += node.value;
-              }
-              else {
-                  layer = node.layer;
-                  max = runningTotal > max ? runningTotal : max;
-                  runningTotal = node.value;
-              }
-          });
-          this._extent[1] = (runningTotal > max ? runningTotal : max) * 1.1;
-          const s = this.nodes.reduce((ac, n) => { ac[n.layer] = (ac[n.layer] || 0) + 1; return ac; }, {});
-          for (let [k, v] of Object.entries(s)) {
-              if (this.orient === "horizontal") {
-                  // @ts-ignore
-                  this._stepY[k] = this.rh / v;
-              }
-              else {
-                  // @ts-ignore
-                  this._stepX[k] = this.rw / v;
-              }
-          }
-          if (this.orient === "horizontal") {
-              this._stepX[0] = this.rw / this._totalLayers;
-          }
-          else {
-              this._stepY[0] = this.rh / this._totalLayers;
-          }
-          const rng = this.orient === "horizontal" ? [0, this.rh] : [0, this.rw];
-          this._scale = linear$1$1()
-              .domain([0, this._extent[1]])
-              .range(rng);
-      }
-      _initNodeLink(nodes, links) {
-          nodes.forEach((node, i) => {
-              const n = node;
-              n.h = 0;
-              n.id = i;
-              n.layer = -1;
-              n.linksIn = [];
-              n.linksOut = [];
-              n.w = 0;
-              n.x = 0;
-              n.y = 0;
-              this.nodes.push(n);
-          });
-          links.forEach((link, i) => {
-              const l = link;
-              l.nodeIn = this.nodes[link.source];
-              l.nodeOut = this.nodes[link.target];
-              l.w = 0;
-              l.y0 = 0;
-              l.y1 = 0;
-              this.links.push(l);
-              this.links[i].nodeIn.linksOut.push(this.links[i]);
-              this.links[i].nodeOut.linksIn.push(this.links[i]);
-          });
-      }
       _nodeValueLayer() {
           const track = new Map();
           let max = 0;
@@ -11580,6 +11620,7 @@ var App = (function (exports) {
               });
           });
           this._totalLayers = max;
+          this._layerGap = (this.orient === "horizontal" ? this.rw : this.rh) / this._totalLayers;
           // sort: by layer asc then by size then by a-z name
           this.nodes.sort((a, b) => a.layer - b.layer || b.value - a.value || (b.name > a.name ? -1 : 1));
       }
