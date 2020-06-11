@@ -1,5 +1,3 @@
-import { format } from "d3-format";
-
 /**
  * returns short date format based on data key "daymonth" e.g. "0102" being 1st Feb
  * @param day 
@@ -16,14 +14,4 @@ export function getScreenDate(day: string): string {
 export function getMonthYear(s: string): string {
 	const today = new Date(parseInt(s.substr(0, 4)), parseInt(s.substr(4, 2)) - 1, 1);
 	return today.toLocaleDateString("en-GB", { year: "numeric", month: "short" });
-}
-
-const format2 = format(",.2f"), format1 = format(",.1f"), format0 = format(",.0f");
-
-/**
- * Formats a number
- * @param v 
- */
-export function formatNumber(v: number): string {
-	return v < 1 ? format2(v) : v < 10 ? format1(v) : format0(v);
 }

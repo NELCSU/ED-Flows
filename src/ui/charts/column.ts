@@ -3,14 +3,15 @@ import { select } from "d3-selection";
 import { max, sum } from "d3-array";
 import { scaleLinear, scaleBand } from "d3-scale";
 import { axisBottom } from "d3-axis";
-import { format } from "d3-format";
 import { Slicer } from "@buckneri/js-lib-slicer";
-import { svg } from "../../../node_modules/@buckneri/spline/dist";
+import { svg } from "@buckneri/spline";
 
 export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const s = new Slicer(data.map(d => d.label));
   const total: number = Math.round(sum(data, (d: TBreakdown) => d.value));
-  const f = (total === 1) ? format(".0%") : format(".0f");
+  const fp: Intl.NumberFormat = total === 1
+    ? new Intl.NumberFormat("en-GB", { style: "percent" })
+    : new Intl.NumberFormat("en-GB", { style: "decimal" });
   const margin = { top: 10, right: 10, bottom: 30, left: 20 };
   const width = node.clientWidth;
   const rw = width - margin.left - margin.right;
@@ -80,13 +81,13 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
     .attr("height", (d: TBreakdown) => rh - y(d.value));
 
   rbar.append("title")
-    .text((d: TBreakdown) => `${d.label}: ${f(d.value)} calls`);
+    .text((d: TBreakdown) => `${d.label}: ${fp.format(d.value)} calls`);
 
   gbar.append("text")
     .classed("bar", true)
     .attr("x", x.bandwidth() / 2)
     .attr("y", -2)
-    .text((d: TBreakdown) => `${f(d.value)}`);
+    .text((d: TBreakdown) => `${fp.format(d.value)}`);
 
   function barClickHandler(d: TBreakdown, event: MouseEvent) {
     event.stopImmediatePropagation();

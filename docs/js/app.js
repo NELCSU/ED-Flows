@@ -69,6 +69,10 @@ var App = (function (exports) {
   }
 
   /**
+   * Returns true if character is an aposthrophe
+   * @param text - single character to inspect
+   */
+  /**
    * Select n characters from the left side of string s
    * @param s - string to select from
    * @param n - number of characters to select
@@ -3765,7 +3769,7 @@ var App = (function (exports) {
     renderCell(i, context) {
       const buffer = context == null ? context = new Path : undefined;
       const points = this._clip(i);
-      if (points === null) return;
+      if (points === null || !points.length) return;
       context.moveTo(points[0], points[1]);
       let n = points.length;
       while (points[0] === points[n-2] && points[1] === points[n-1] && n > 1) n -= 2;
@@ -3780,7 +3784,7 @@ var App = (function (exports) {
       const {delaunay: {points}} = this;
       for (let i = 0, n = points.length / 2; i < n; ++i) {
         const cell = this.cellPolygon(i);
-        if (cell) yield cell;
+        if (cell) cell.index = i, yield cell;
       }
     }
     cellPolygon(i) {
@@ -3977,7 +3981,7 @@ var App = (function (exports) {
     }
   }
 
-  const tau = 2 * Math.PI;
+  const tau = 2 * Math.PI, pow = Math.pow;
 
   function pointX(p) {
     return p[0];
@@ -4032,7 +4036,7 @@ var App = (function (exports) {
           .sort((i, j) => points[2 * i] - points[2 * j] || points[2 * i + 1] - points[2 * j + 1]); // for exact neighbors
         const e = this.collinear[0], f = this.collinear[this.collinear.length - 1],
           bounds = [ points[2 * e], points[2 * e + 1], points[2 * f], points[2 * f + 1] ],
-          r = 1e-8 * Math.sqrt((bounds[3] - bounds[1])**2 + (bounds[2] - bounds[0])**2);
+          r = 1e-8 * Math.hypot(bounds[3] - bounds[1], bounds[2] - bounds[0]);
         for (let i = 0, n = points.length / 2; i < n; ++i) {
           const p = jitter(points[2 * i], points[2 * i + 1], r);
           points[2 * i] = p[0];
@@ -4111,12 +4115,12 @@ var App = (function (exports) {
       const {inedges, hull, _hullIndex, halfedges, triangles, points} = this;
       if (inedges[i] === -1 || !points.length) return (i + 1) % (points.length >> 1);
       let c = i;
-      let dc = (x - points[i * 2]) ** 2 + (y - points[i * 2 + 1]) ** 2;
+      let dc = pow(x - points[i * 2], 2) + pow(y - points[i * 2 + 1], 2);
       const e0 = inedges[i];
       let e = e0;
       do {
         let t = triangles[e];
-        const dt = (x - points[t * 2]) ** 2 + (y - points[t * 2 + 1]) ** 2;
+        const dt = pow(x - points[t * 2], 2) + pow(y - points[t * 2 + 1], 2);
         if (dt < dc) dc = dt, c = t;
         e = e % 3 === 2 ? e - 2 : e + 1;
         if (triangles[e] !== i) break; // bad triangulation
@@ -4124,7 +4128,7 @@ var App = (function (exports) {
         if (e === -1) {
           e = hull[(_hullIndex[i] + 1) % hull.length];
           if (e !== t) {
-            if ((x - points[e * 2]) ** 2 + (y - points[e * 2 + 1]) ** 2 < dc) return e;
+            if (pow(x - points[e * 2], 2) + pow(y - points[e * 2 + 1], 2) < dc) return e;
           }
           break;
         }
@@ -4486,329 +4490,10 @@ var App = (function (exports) {
       });
   }
 
-  // Computes the decimal coefficient and exponent of the specified number x with
-  // significant digits p, where x is positive and p is in [1, 21] or undefined.
-  // For example, formatDecimal(1.23) returns ["123", 0].
-  function formatDecimal(x, p) {
-    if ((i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e")) < 0) return null; // NaN, ±Infinity
-    var i, coefficient = x.slice(0, i);
-
-    // The string returned by toExponential either has the form \d\.\d+e[-+]\d+
-    // (e.g., 1.2e+3) or the form \de[-+]\d+ (e.g., 1e+3).
-    return [
-      coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient,
-      +x.slice(i + 1)
-    ];
-  }
-
-  function exponent(x) {
-    return x = formatDecimal(Math.abs(x)), x ? x[1] : NaN;
-  }
-
-  function formatGroup(grouping, thousands) {
-    return function(value, width) {
-      var i = value.length,
-          t = [],
-          j = 0,
-          g = grouping[0],
-          length = 0;
-
-      while (i > 0 && g > 0) {
-        if (length + g + 1 > width) g = Math.max(1, width - length);
-        t.push(value.substring(i -= g, i + g));
-        if ((length += g + 1) > width) break;
-        g = grouping[j = (j + 1) % grouping.length];
-      }
-
-      return t.reverse().join(thousands);
-    };
-  }
-
-  function formatNumerals(numerals) {
-    return function(value) {
-      return value.replace(/[0-9]/g, function(i) {
-        return numerals[+i];
-      });
-    };
-  }
-
-  // [[fill]align][sign][symbol][0][width][,][.precision][~][type]
-  var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
-
-  function formatSpecifier(specifier) {
-    if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
-    var match;
-    return new FormatSpecifier({
-      fill: match[1],
-      align: match[2],
-      sign: match[3],
-      symbol: match[4],
-      zero: match[5],
-      width: match[6],
-      comma: match[7],
-      precision: match[8] && match[8].slice(1),
-      trim: match[9],
-      type: match[10]
-    });
-  }
-
-  formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
-
-  function FormatSpecifier(specifier) {
-    this.fill = specifier.fill === undefined ? " " : specifier.fill + "";
-    this.align = specifier.align === undefined ? ">" : specifier.align + "";
-    this.sign = specifier.sign === undefined ? "-" : specifier.sign + "";
-    this.symbol = specifier.symbol === undefined ? "" : specifier.symbol + "";
-    this.zero = !!specifier.zero;
-    this.width = specifier.width === undefined ? undefined : +specifier.width;
-    this.comma = !!specifier.comma;
-    this.precision = specifier.precision === undefined ? undefined : +specifier.precision;
-    this.trim = !!specifier.trim;
-    this.type = specifier.type === undefined ? "" : specifier.type + "";
-  }
-
-  FormatSpecifier.prototype.toString = function() {
-    return this.fill
-        + this.align
-        + this.sign
-        + this.symbol
-        + (this.zero ? "0" : "")
-        + (this.width === undefined ? "" : Math.max(1, this.width | 0))
-        + (this.comma ? "," : "")
-        + (this.precision === undefined ? "" : "." + Math.max(0, this.precision | 0))
-        + (this.trim ? "~" : "")
-        + this.type;
-  };
-
-  // Trims insignificant zeros, e.g., replaces 1.2000k with 1.2k.
-  function formatTrim(s) {
-    out: for (var n = s.length, i = 1, i0 = -1, i1; i < n; ++i) {
-      switch (s[i]) {
-        case ".": i0 = i1 = i; break;
-        case "0": if (i0 === 0) i0 = i; i1 = i; break;
-        default: if (!+s[i]) break out; if (i0 > 0) i0 = 0; break;
-      }
-    }
-    return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
-  }
-
-  var prefixExponent;
-
-  function formatPrefixAuto(x, p) {
-    var d = formatDecimal(x, p);
-    if (!d) return x + "";
-    var coefficient = d[0],
-        exponent = d[1],
-        i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1,
-        n = coefficient.length;
-    return i === n ? coefficient
-        : i > n ? coefficient + new Array(i - n + 1).join("0")
-        : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i)
-        : "0." + new Array(1 - i).join("0") + formatDecimal(x, Math.max(0, p + i - 1))[0]; // less than 1y!
-  }
-
-  function formatRounded(x, p) {
-    var d = formatDecimal(x, p);
-    if (!d) return x + "";
-    var coefficient = d[0],
-        exponent = d[1];
-    return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient
-        : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1)
-        : coefficient + new Array(exponent - coefficient.length + 2).join("0");
-  }
-
-  var formatTypes = {
-    "%": function(x, p) { return (x * 100).toFixed(p); },
-    "b": function(x) { return Math.round(x).toString(2); },
-    "c": function(x) { return x + ""; },
-    "d": function(x) { return Math.round(x).toString(10); },
-    "e": function(x, p) { return x.toExponential(p); },
-    "f": function(x, p) { return x.toFixed(p); },
-    "g": function(x, p) { return x.toPrecision(p); },
-    "o": function(x) { return Math.round(x).toString(8); },
-    "p": function(x, p) { return formatRounded(x * 100, p); },
-    "r": formatRounded,
-    "s": formatPrefixAuto,
-    "X": function(x) { return Math.round(x).toString(16).toUpperCase(); },
-    "x": function(x) { return Math.round(x).toString(16); }
-  };
-
-  function identity$1(x) {
-    return x;
-  }
-
-  var map = Array.prototype.map,
-      prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"];
-
-  function formatLocale(locale) {
-    var group = locale.grouping === undefined || locale.thousands === undefined ? identity$1 : formatGroup(map.call(locale.grouping, Number), locale.thousands + ""),
-        currencyPrefix = locale.currency === undefined ? "" : locale.currency[0] + "",
-        currencySuffix = locale.currency === undefined ? "" : locale.currency[1] + "",
-        decimal = locale.decimal === undefined ? "." : locale.decimal + "",
-        numerals = locale.numerals === undefined ? identity$1 : formatNumerals(map.call(locale.numerals, String)),
-        percent = locale.percent === undefined ? "%" : locale.percent + "",
-        minus = locale.minus === undefined ? "-" : locale.minus + "",
-        nan = locale.nan === undefined ? "NaN" : locale.nan + "";
-
-    function newFormat(specifier) {
-      specifier = formatSpecifier(specifier);
-
-      var fill = specifier.fill,
-          align = specifier.align,
-          sign = specifier.sign,
-          symbol = specifier.symbol,
-          zero = specifier.zero,
-          width = specifier.width,
-          comma = specifier.comma,
-          precision = specifier.precision,
-          trim = specifier.trim,
-          type = specifier.type;
-
-      // The "n" type is an alias for ",g".
-      if (type === "n") comma = true, type = "g";
-
-      // The "" type, and any invalid type, is an alias for ".12~g".
-      else if (!formatTypes[type]) precision === undefined && (precision = 12), trim = true, type = "g";
-
-      // If zero fill is specified, padding goes after sign and before digits.
-      if (zero || (fill === "0" && align === "=")) zero = true, fill = "0", align = "=";
-
-      // Compute the prefix and suffix.
-      // For SI-prefix, the suffix is lazily computed.
-      var prefix = symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
-          suffix = symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "";
-
-      // What format function should we use?
-      // Is this an integer type?
-      // Can this type generate exponential notation?
-      var formatType = formatTypes[type],
-          maybeSuffix = /[defgprs%]/.test(type);
-
-      // Set the default precision if not specified,
-      // or clamp the specified precision to the supported range.
-      // For significant precision, it must be in [1, 21].
-      // For fixed precision, it must be in [0, 20].
-      precision = precision === undefined ? 6
-          : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision))
-          : Math.max(0, Math.min(20, precision));
-
-      function format(value) {
-        var valuePrefix = prefix,
-            valueSuffix = suffix,
-            i, n, c;
-
-        if (type === "c") {
-          valueSuffix = formatType(value) + valueSuffix;
-          value = "";
-        } else {
-          value = +value;
-
-          // Determine the sign. -0 is not less than 0, but 1 / -0 is!
-          var valueNegative = value < 0 || 1 / value < 0;
-
-          // Perform the initial formatting.
-          value = isNaN(value) ? nan : formatType(Math.abs(value), precision);
-
-          // Trim insignificant zeros.
-          if (trim) value = formatTrim(value);
-
-          // If a negative value rounds to zero after formatting, and no explicit positive sign is requested, hide the sign.
-          if (valueNegative && +value === 0 && sign !== "+") valueNegative = false;
-
-          // Compute the prefix and suffix.
-          valuePrefix = (valueNegative ? (sign === "(" ? sign : minus) : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
-          valueSuffix = (type === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
-
-          // Break the formatted value into the integer “value” part that can be
-          // grouped, and fractional or exponential “suffix” part that is not.
-          if (maybeSuffix) {
-            i = -1, n = value.length;
-            while (++i < n) {
-              if (c = value.charCodeAt(i), 48 > c || c > 57) {
-                valueSuffix = (c === 46 ? decimal + value.slice(i + 1) : value.slice(i)) + valueSuffix;
-                value = value.slice(0, i);
-                break;
-              }
-            }
-          }
-        }
-
-        // If the fill character is not "0", grouping is applied before padding.
-        if (comma && !zero) value = group(value, Infinity);
-
-        // Compute the padding.
-        var length = valuePrefix.length + value.length + valueSuffix.length,
-            padding = length < width ? new Array(width - length + 1).join(fill) : "";
-
-        // If the fill character is "0", grouping is applied after padding.
-        if (comma && zero) value = group(padding + value, padding.length ? width - valueSuffix.length : Infinity), padding = "";
-
-        // Reconstruct the final output based on the desired alignment.
-        switch (align) {
-          case "<": value = valuePrefix + value + valueSuffix + padding; break;
-          case "=": value = valuePrefix + padding + value + valueSuffix; break;
-          case "^": value = padding.slice(0, length = padding.length >> 1) + valuePrefix + value + valueSuffix + padding.slice(length); break;
-          default: value = padding + valuePrefix + value + valueSuffix; break;
-        }
-
-        return numerals(value);
-      }
-
-      format.toString = function() {
-        return specifier + "";
-      };
-
-      return format;
-    }
-
-    function formatPrefix(specifier, value) {
-      var f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier)),
-          e = Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3,
-          k = Math.pow(10, -e),
-          prefix = prefixes[8 + e / 3];
-      return function(value) {
-        return f(k * value) + prefix;
-      };
-    }
-
-    return {
-      format: newFormat,
-      formatPrefix: formatPrefix
-    };
-  }
-
-  var locale;
-  var format;
-  var formatPrefix;
-
-  defaultLocale({
-    decimal: ".",
-    thousands: ",",
-    grouping: [3],
-    currency: ["$", ""],
-    minus: "-"
-  });
-
-  function defaultLocale(definition) {
-    locale = formatLocale(definition);
-    format = locale.format;
-    formatPrefix = locale.formatPrefix;
-    return locale;
-  }
-
-  function precisionFixed(step) {
-    return Math.max(0, -exponent(Math.abs(step)));
-  }
-
-  function precisionPrefix(step, value) {
-    return Math.max(0, Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3 - exponent(Math.abs(step)));
-  }
-
-  function precisionRound(step, max) {
-    step = Math.abs(step), max = Math.abs(max) - step;
-    return Math.max(0, exponent(max) - exponent(step)) + 1;
-  }
-
+  /**
+   * returns short date format based on data key "daymonth" e.g. "0102" being 1st Feb
+   * @param day
+   */
   /**
    * returns short date format based on data key "daymonth" e.g. "0102" being 1st Feb
    * @param s
@@ -4816,14 +4501,6 @@ var App = (function (exports) {
   function getMonthYear(s) {
       const today = new Date(parseInt(s.substr(0, 4)), parseInt(s.substr(4, 2)) - 1, 1);
       return today.toLocaleDateString("en-GB", { year: "numeric", month: "short" });
-  }
-  const format2 = format(",.2f"), format1 = format(",.1f"), format0 = format(",.0f");
-  /**
-   * Formats a number
-   * @param v
-   */
-  function formatNumber(v) {
-      return v < 1 ? format2(v) : v < 10 ? format1(v) : format0(v);
   }
 
   const day = document.getElementById("Day");
@@ -4992,12 +4669,12 @@ var App = (function (exports) {
   var ascendingBisect = bisector(ascending$1);
   var bisectRight = ascendingBisect.right;
 
-  function identity$2(x) {
+  function identity$1(x) {
     return x;
   }
 
   function rollup(values, reduce, ...keys) {
-    return nest(values, identity$2, reduce, keys);
+    return nest(values, identity$1, reduce, keys);
   }
 
   function nest(values, map, reduce, keys) {
@@ -5289,7 +4966,7 @@ var App = (function (exports) {
 
   var unit = [0, 1];
 
-  function identity$3(x) {
+  function identity$2(x) {
     return x;
   }
 
@@ -5353,14 +5030,14 @@ var App = (function (exports) {
         transform,
         untransform,
         unknown,
-        clamp = identity$3,
+        clamp = identity$2,
         piecewise,
         output,
         input;
 
     function rescale() {
       var n = Math.min(domain.length, range.length);
-      if (clamp !== identity$3) clamp = clamper(domain[0], domain[n - 1]);
+      if (clamp !== identity$2) clamp = clamper(domain[0], domain[n - 1]);
       piecewise = n > 2 ? polymap : bimap;
       output = input = null;
       return scale;
@@ -5387,7 +5064,7 @@ var App = (function (exports) {
     };
 
     scale.clamp = function(_) {
-      return arguments.length ? (clamp = _ ? true : identity$3, rescale()) : clamp !== identity$3;
+      return arguments.length ? (clamp = _ ? true : identity$2, rescale()) : clamp !== identity$2;
     };
 
     scale.interpolate = function(_) {
@@ -5405,7 +5082,330 @@ var App = (function (exports) {
   }
 
   function continuous() {
-    return transformer()(identity$3, identity$3);
+    return transformer()(identity$2, identity$2);
+  }
+
+  // Computes the decimal coefficient and exponent of the specified number x with
+  // significant digits p, where x is positive and p is in [1, 21] or undefined.
+  // For example, formatDecimal(1.23) returns ["123", 0].
+  function formatDecimal(x, p) {
+    if ((i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e")) < 0) return null; // NaN, ±Infinity
+    var i, coefficient = x.slice(0, i);
+
+    // The string returned by toExponential either has the form \d\.\d+e[-+]\d+
+    // (e.g., 1.2e+3) or the form \de[-+]\d+ (e.g., 1e+3).
+    return [
+      coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient,
+      +x.slice(i + 1)
+    ];
+  }
+
+  function exponent(x) {
+    return x = formatDecimal(Math.abs(x)), x ? x[1] : NaN;
+  }
+
+  function formatGroup(grouping, thousands) {
+    return function(value, width) {
+      var i = value.length,
+          t = [],
+          j = 0,
+          g = grouping[0],
+          length = 0;
+
+      while (i > 0 && g > 0) {
+        if (length + g + 1 > width) g = Math.max(1, width - length);
+        t.push(value.substring(i -= g, i + g));
+        if ((length += g + 1) > width) break;
+        g = grouping[j = (j + 1) % grouping.length];
+      }
+
+      return t.reverse().join(thousands);
+    };
+  }
+
+  function formatNumerals(numerals) {
+    return function(value) {
+      return value.replace(/[0-9]/g, function(i) {
+        return numerals[+i];
+      });
+    };
+  }
+
+  // [[fill]align][sign][symbol][0][width][,][.precision][~][type]
+  var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
+
+  function formatSpecifier(specifier) {
+    if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
+    var match;
+    return new FormatSpecifier({
+      fill: match[1],
+      align: match[2],
+      sign: match[3],
+      symbol: match[4],
+      zero: match[5],
+      width: match[6],
+      comma: match[7],
+      precision: match[8] && match[8].slice(1),
+      trim: match[9],
+      type: match[10]
+    });
+  }
+
+  formatSpecifier.prototype = FormatSpecifier.prototype; // instanceof
+
+  function FormatSpecifier(specifier) {
+    this.fill = specifier.fill === undefined ? " " : specifier.fill + "";
+    this.align = specifier.align === undefined ? ">" : specifier.align + "";
+    this.sign = specifier.sign === undefined ? "-" : specifier.sign + "";
+    this.symbol = specifier.symbol === undefined ? "" : specifier.symbol + "";
+    this.zero = !!specifier.zero;
+    this.width = specifier.width === undefined ? undefined : +specifier.width;
+    this.comma = !!specifier.comma;
+    this.precision = specifier.precision === undefined ? undefined : +specifier.precision;
+    this.trim = !!specifier.trim;
+    this.type = specifier.type === undefined ? "" : specifier.type + "";
+  }
+
+  FormatSpecifier.prototype.toString = function() {
+    return this.fill
+        + this.align
+        + this.sign
+        + this.symbol
+        + (this.zero ? "0" : "")
+        + (this.width === undefined ? "" : Math.max(1, this.width | 0))
+        + (this.comma ? "," : "")
+        + (this.precision === undefined ? "" : "." + Math.max(0, this.precision | 0))
+        + (this.trim ? "~" : "")
+        + this.type;
+  };
+
+  // Trims insignificant zeros, e.g., replaces 1.2000k with 1.2k.
+  function formatTrim(s) {
+    out: for (var n = s.length, i = 1, i0 = -1, i1; i < n; ++i) {
+      switch (s[i]) {
+        case ".": i0 = i1 = i; break;
+        case "0": if (i0 === 0) i0 = i; i1 = i; break;
+        default: if (!+s[i]) break out; if (i0 > 0) i0 = 0; break;
+      }
+    }
+    return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
+  }
+
+  var prefixExponent;
+
+  function formatPrefixAuto(x, p) {
+    var d = formatDecimal(x, p);
+    if (!d) return x + "";
+    var coefficient = d[0],
+        exponent = d[1],
+        i = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1,
+        n = coefficient.length;
+    return i === n ? coefficient
+        : i > n ? coefficient + new Array(i - n + 1).join("0")
+        : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i)
+        : "0." + new Array(1 - i).join("0") + formatDecimal(x, Math.max(0, p + i - 1))[0]; // less than 1y!
+  }
+
+  function formatRounded(x, p) {
+    var d = formatDecimal(x, p);
+    if (!d) return x + "";
+    var coefficient = d[0],
+        exponent = d[1];
+    return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient
+        : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1)
+        : coefficient + new Array(exponent - coefficient.length + 2).join("0");
+  }
+
+  var formatTypes = {
+    "%": function(x, p) { return (x * 100).toFixed(p); },
+    "b": function(x) { return Math.round(x).toString(2); },
+    "c": function(x) { return x + ""; },
+    "d": function(x) { return Math.round(x).toString(10); },
+    "e": function(x, p) { return x.toExponential(p); },
+    "f": function(x, p) { return x.toFixed(p); },
+    "g": function(x, p) { return x.toPrecision(p); },
+    "o": function(x) { return Math.round(x).toString(8); },
+    "p": function(x, p) { return formatRounded(x * 100, p); },
+    "r": formatRounded,
+    "s": formatPrefixAuto,
+    "X": function(x) { return Math.round(x).toString(16).toUpperCase(); },
+    "x": function(x) { return Math.round(x).toString(16); }
+  };
+
+  function identity$3(x) {
+    return x;
+  }
+
+  var map = Array.prototype.map,
+      prefixes = ["y","z","a","f","p","n","µ","m","","k","M","G","T","P","E","Z","Y"];
+
+  function formatLocale(locale) {
+    var group = locale.grouping === undefined || locale.thousands === undefined ? identity$3 : formatGroup(map.call(locale.grouping, Number), locale.thousands + ""),
+        currencyPrefix = locale.currency === undefined ? "" : locale.currency[0] + "",
+        currencySuffix = locale.currency === undefined ? "" : locale.currency[1] + "",
+        decimal = locale.decimal === undefined ? "." : locale.decimal + "",
+        numerals = locale.numerals === undefined ? identity$3 : formatNumerals(map.call(locale.numerals, String)),
+        percent = locale.percent === undefined ? "%" : locale.percent + "",
+        minus = locale.minus === undefined ? "-" : locale.minus + "",
+        nan = locale.nan === undefined ? "NaN" : locale.nan + "";
+
+    function newFormat(specifier) {
+      specifier = formatSpecifier(specifier);
+
+      var fill = specifier.fill,
+          align = specifier.align,
+          sign = specifier.sign,
+          symbol = specifier.symbol,
+          zero = specifier.zero,
+          width = specifier.width,
+          comma = specifier.comma,
+          precision = specifier.precision,
+          trim = specifier.trim,
+          type = specifier.type;
+
+      // The "n" type is an alias for ",g".
+      if (type === "n") comma = true, type = "g";
+
+      // The "" type, and any invalid type, is an alias for ".12~g".
+      else if (!formatTypes[type]) precision === undefined && (precision = 12), trim = true, type = "g";
+
+      // If zero fill is specified, padding goes after sign and before digits.
+      if (zero || (fill === "0" && align === "=")) zero = true, fill = "0", align = "=";
+
+      // Compute the prefix and suffix.
+      // For SI-prefix, the suffix is lazily computed.
+      var prefix = symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : "",
+          suffix = symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "";
+
+      // What format function should we use?
+      // Is this an integer type?
+      // Can this type generate exponential notation?
+      var formatType = formatTypes[type],
+          maybeSuffix = /[defgprs%]/.test(type);
+
+      // Set the default precision if not specified,
+      // or clamp the specified precision to the supported range.
+      // For significant precision, it must be in [1, 21].
+      // For fixed precision, it must be in [0, 20].
+      precision = precision === undefined ? 6
+          : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision))
+          : Math.max(0, Math.min(20, precision));
+
+      function format(value) {
+        var valuePrefix = prefix,
+            valueSuffix = suffix,
+            i, n, c;
+
+        if (type === "c") {
+          valueSuffix = formatType(value) + valueSuffix;
+          value = "";
+        } else {
+          value = +value;
+
+          // Determine the sign. -0 is not less than 0, but 1 / -0 is!
+          var valueNegative = value < 0 || 1 / value < 0;
+
+          // Perform the initial formatting.
+          value = isNaN(value) ? nan : formatType(Math.abs(value), precision);
+
+          // Trim insignificant zeros.
+          if (trim) value = formatTrim(value);
+
+          // If a negative value rounds to zero after formatting, and no explicit positive sign is requested, hide the sign.
+          if (valueNegative && +value === 0 && sign !== "+") valueNegative = false;
+
+          // Compute the prefix and suffix.
+          valuePrefix = (valueNegative ? (sign === "(" ? sign : minus) : sign === "-" || sign === "(" ? "" : sign) + valuePrefix;
+          valueSuffix = (type === "s" ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign === "(" ? ")" : "");
+
+          // Break the formatted value into the integer “value” part that can be
+          // grouped, and fractional or exponential “suffix” part that is not.
+          if (maybeSuffix) {
+            i = -1, n = value.length;
+            while (++i < n) {
+              if (c = value.charCodeAt(i), 48 > c || c > 57) {
+                valueSuffix = (c === 46 ? decimal + value.slice(i + 1) : value.slice(i)) + valueSuffix;
+                value = value.slice(0, i);
+                break;
+              }
+            }
+          }
+        }
+
+        // If the fill character is not "0", grouping is applied before padding.
+        if (comma && !zero) value = group(value, Infinity);
+
+        // Compute the padding.
+        var length = valuePrefix.length + value.length + valueSuffix.length,
+            padding = length < width ? new Array(width - length + 1).join(fill) : "";
+
+        // If the fill character is "0", grouping is applied after padding.
+        if (comma && zero) value = group(padding + value, padding.length ? width - valueSuffix.length : Infinity), padding = "";
+
+        // Reconstruct the final output based on the desired alignment.
+        switch (align) {
+          case "<": value = valuePrefix + value + valueSuffix + padding; break;
+          case "=": value = valuePrefix + padding + value + valueSuffix; break;
+          case "^": value = padding.slice(0, length = padding.length >> 1) + valuePrefix + value + valueSuffix + padding.slice(length); break;
+          default: value = padding + valuePrefix + value + valueSuffix; break;
+        }
+
+        return numerals(value);
+      }
+
+      format.toString = function() {
+        return specifier + "";
+      };
+
+      return format;
+    }
+
+    function formatPrefix(specifier, value) {
+      var f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier)),
+          e = Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3,
+          k = Math.pow(10, -e),
+          prefix = prefixes[8 + e / 3];
+      return function(value) {
+        return f(k * value) + prefix;
+      };
+    }
+
+    return {
+      format: newFormat,
+      formatPrefix: formatPrefix
+    };
+  }
+
+  var locale;
+  var format;
+  var formatPrefix;
+
+  defaultLocale({
+    decimal: ".",
+    thousands: ",",
+    grouping: [3],
+    currency: ["$", ""],
+    minus: "-"
+  });
+
+  function defaultLocale(definition) {
+    locale = formatLocale(definition);
+    format = locale.format;
+    formatPrefix = locale.formatPrefix;
+    return locale;
+  }
+
+  function precisionFixed(step) {
+    return Math.max(0, -exponent(Math.abs(step)));
+  }
+
+  function precisionPrefix(step, value) {
+    return Math.max(0, Math.max(-8, Math.min(8, Math.floor(exponent(value) / 3))) * 3 - exponent(Math.abs(step)));
+  }
+
+  function precisionRound(step, max) {
+    step = Math.abs(step), max = Math.abs(max) - step;
+    return Math.max(0, exponent(max) - exponent(step)) + 1;
   }
 
   function tickFormat(start, stop, count, specifier) {
@@ -5510,7 +5510,7 @@ var App = (function (exports) {
         t1,
         k10,
         transform,
-        interpolator = identity$3,
+        interpolator = identity$2,
         clamp = false,
         unknown;
 
@@ -5560,7 +5560,7 @@ var App = (function (exports) {
   }
 
   function sequential() {
-    var scale = linearish(transformer$1()(identity$3));
+    var scale = linearish(transformer$1()(identity$2));
 
     scale.copy = function() {
       return copy$1(scale, sequential());
@@ -6011,7 +6011,7 @@ var App = (function (exports) {
 
   var global = typeof window !== 'undefined' ? window : {};
 
-  var cache = new Map();
+  var cache = new WeakMap();
   var scrollRegexp = /auto|scroll/;
   var verticalRegexp = /^tb|vertical/;
   var IE = (/msie|trident/i).test(global.navigator && global.navigator.userAgent);
@@ -6031,8 +6031,9 @@ var App = (function (exports) {
       contentBoxSize: size(),
       contentRect: new DOMRectReadOnly(0, 0, 0, 0)
   });
-  var calculateBoxSizes = function (target) {
-      if (cache.has(target)) {
+  var calculateBoxSizes = function (target, forceRecalculation) {
+      if (forceRecalculation === void 0) { forceRecalculation = false; }
+      if (cache.has(target) && !forceRecalculation) {
           return cache.get(target);
       }
       if (isHidden(target)) {
@@ -6074,8 +6075,8 @@ var App = (function (exports) {
       cache.set(target, boxes);
       return boxes;
   };
-  var calculateBoxSize = function (target, observedBox) {
-      var _a = calculateBoxSizes(target), borderBoxSize = _a.borderBoxSize, contentBoxSize = _a.contentBoxSize, devicePixelContentBoxSize = _a.devicePixelContentBoxSize;
+  var calculateBoxSize = function (target, observedBox, forceRecalculation) {
+      var _a = calculateBoxSizes(target, forceRecalculation), borderBoxSize = _a.borderBoxSize, contentBoxSize = _a.contentBoxSize, devicePixelContentBoxSize = _a.devicePixelContentBoxSize;
       switch (observedBox) {
           case ResizeObserverBoxOptions.DEVICE_PIXEL_CONTENT_BOX:
               return devicePixelContentBoxSize;
@@ -6141,7 +6142,6 @@ var App = (function (exports) {
   };
 
   var gatherActiveObservationsAtDepth = function (depth) {
-      cache.clear();
       resizeObservers.forEach(function processObserver(ro) {
           ro.activeTargets.splice(0, ro.activeTargets.length);
           ro.skippedTargets.splice(0, ro.skippedTargets.length);
@@ -6194,7 +6194,7 @@ var App = (function (exports) {
 
   var watching = 0;
   var isWatching = function () { return !!watching; };
-  var CATCH_FRAMES = 60 / 5;
+  var CATCH_PERIOD = 250;
   var observerConfig = { attributes: true, characterData: true, childList: true, subtree: true };
   var events = [
       'resize',
@@ -6212,6 +6212,10 @@ var App = (function (exports) {
       'blur',
       'focus'
   ];
+  var time = function (timeout) {
+      if (timeout === void 0) { timeout = 0; }
+      return Date.now() + timeout;
+  };
   var scheduled = false;
   var Scheduler = (function () {
       function Scheduler() {
@@ -6219,12 +6223,14 @@ var App = (function (exports) {
           this.stopped = true;
           this.listener = function () { return _this.schedule(); };
       }
-      Scheduler.prototype.run = function (frames) {
+      Scheduler.prototype.run = function (timeout) {
           var _this = this;
+          if (timeout === void 0) { timeout = CATCH_PERIOD; }
           if (scheduled) {
               return;
           }
           scheduled = true;
+          var until = time(timeout);
           queueResizeObserver(function () {
               var elementsHaveResized = false;
               try {
@@ -6232,14 +6238,15 @@ var App = (function (exports) {
               }
               finally {
                   scheduled = false;
+                  timeout = until - time();
                   if (!isWatching()) {
                       return;
                   }
                   if (elementsHaveResized) {
-                      _this.run(60);
+                      _this.run(1000);
                   }
-                  else if (frames) {
-                      _this.run(frames - 1);
+                  else if (timeout > 0) {
+                      _this.run(timeout);
                   }
                   else {
                       _this.start();
@@ -6249,7 +6256,7 @@ var App = (function (exports) {
       };
       Scheduler.prototype.schedule = function () {
           this.stop();
-          this.run(CATCH_FRAMES);
+          this.run();
       };
       Scheduler.prototype.observe = function () {
           var _this = this;
@@ -6297,7 +6304,7 @@ var App = (function (exports) {
           };
       }
       ResizeObservation.prototype.isActive = function () {
-          var size = calculateBoxSize(this.target, this.observedBox);
+          var size = calculateBoxSize(this.target, this.observedBox, true);
           if (skipNotifyOnElement(this.target)) {
               this.lastReportedSize = size;
           }
@@ -6321,7 +6328,7 @@ var App = (function (exports) {
       return ResizeObserverDetail;
   }());
 
-  var observerMap = new Map();
+  var observerMap = new WeakMap();
   var getObservationIndex = function (observationTargets, target) {
       for (var i = 0; i < observationTargets.length; i += 1) {
           if (observationTargets[i].target === target) {
@@ -6335,36 +6342,33 @@ var App = (function (exports) {
       }
       ResizeObserverController.connect = function (resizeObserver, callback) {
           var detail = new ResizeObserverDetail(resizeObserver, callback);
-          resizeObservers.push(detail);
           observerMap.set(resizeObserver, detail);
       };
       ResizeObserverController.observe = function (resizeObserver, target, options) {
-          if (observerMap.has(resizeObserver)) {
-              var detail = observerMap.get(resizeObserver);
-              if (getObservationIndex(detail.observationTargets, target) < 0) {
-                  detail.observationTargets.push(new ResizeObservation(target, options && options.box));
-                  updateCount(1);
-                  scheduler.schedule();
-              }
+          var detail = observerMap.get(resizeObserver);
+          var firstObservation = detail.observationTargets.length === 0;
+          if (getObservationIndex(detail.observationTargets, target) < 0) {
+              firstObservation && resizeObservers.push(detail);
+              detail.observationTargets.push(new ResizeObservation(target, options && options.box));
+              updateCount(1);
+              scheduler.schedule();
           }
       };
       ResizeObserverController.unobserve = function (resizeObserver, target) {
-          if (observerMap.has(resizeObserver)) {
-              var detail = observerMap.get(resizeObserver);
-              var index = getObservationIndex(detail.observationTargets, target);
-              if (index >= 0) {
-                  detail.observationTargets.splice(index, 1);
-                  updateCount(-1);
-              }
+          var detail = observerMap.get(resizeObserver);
+          var index = getObservationIndex(detail.observationTargets, target);
+          var lastObservation = detail.observationTargets.length === 1;
+          if (index >= 0) {
+              lastObservation && resizeObservers.splice(resizeObservers.indexOf(detail), 1);
+              detail.observationTargets.splice(index, 1);
+              updateCount(-1);
           }
       };
       ResizeObserverController.disconnect = function (resizeObserver) {
-          if (observerMap.has(resizeObserver)) {
-              var detail = observerMap.get(resizeObserver);
-              resizeObservers.splice(resizeObservers.indexOf(detail), 1);
-              observerMap.delete(resizeObserver);
-              updateCount(-detail.observationTargets.length);
-          }
+          var _this = this;
+          var detail = observerMap.get(resizeObserver);
+          detail.observationTargets.slice().forEach(function (ot) { return _this.unobserve(resizeObserver, ot.target); });
+          detail.activeTargets.splice(0, detail.activeTargets.length);
       };
       return ResizeObserverController;
   }());
@@ -6484,7 +6488,9 @@ var App = (function (exports) {
   function drawColumnChart(node, data) {
       const s = new Slicer(data.map(d => d.label));
       const total = Math.round(sum(data, (d) => d.value));
-      const f = (total === 1) ? format(".0%") : format(".0f");
+      const fp = total === 1
+          ? new Intl.NumberFormat("en-GB", { style: "percent" })
+          : new Intl.NumberFormat("en-GB", { style: "decimal" });
       const margin = { top: 10, right: 10, bottom: 30, left: 20 };
       const width = node.clientWidth;
       const rw = width - margin.left - margin.right;
@@ -6540,12 +6546,12 @@ var App = (function (exports) {
           .attr("y", 0)
           .attr("height", (d) => rh - y(d.value));
       rbar.append("title")
-          .text((d) => `${d.label}: ${f(d.value)} calls`);
+          .text((d) => `${d.label}: ${fp.format(d.value)} calls`);
       gbar.append("text")
           .classed("bar", true)
           .attr("x", x.bandwidth() / 2)
           .attr("y", -2)
-          .text((d) => `${f(d.value)}`);
+          .text((d) => `${fp.format(d.value)}`);
       function barClickHandler(d, event) {
           event.stopImmediatePropagation();
           if (event.ctrlKey) {
@@ -10619,7 +10625,7 @@ var App = (function (exports) {
 
   var global$1 = typeof window !== 'undefined' ? window : {};
 
-  var cache$1 = new Map();
+  var cache$1 = new WeakMap();
   var scrollRegexp$1 = /auto|scroll/;
   var verticalRegexp$1 = /^tb|vertical/;
   var IE$1 = (/msie|trident/i).test(global$1.navigator && global$1.navigator.userAgent);
@@ -10639,8 +10645,9 @@ var App = (function (exports) {
       contentBoxSize: size$1(),
       contentRect: new DOMRectReadOnly$1(0, 0, 0, 0)
   });
-  var calculateBoxSizes$1 = function (target) {
-      if (cache$1.has(target)) {
+  var calculateBoxSizes$1 = function (target, forceRecalculation) {
+      if (forceRecalculation === void 0) { forceRecalculation = false; }
+      if (cache$1.has(target) && !forceRecalculation) {
           return cache$1.get(target);
       }
       if (isHidden$1(target)) {
@@ -10682,8 +10689,8 @@ var App = (function (exports) {
       cache$1.set(target, boxes);
       return boxes;
   };
-  var calculateBoxSize$1 = function (target, observedBox) {
-      var _a = calculateBoxSizes$1(target), borderBoxSize = _a.borderBoxSize, contentBoxSize = _a.contentBoxSize, devicePixelContentBoxSize = _a.devicePixelContentBoxSize;
+  var calculateBoxSize$1 = function (target, observedBox, forceRecalculation) {
+      var _a = calculateBoxSizes$1(target, forceRecalculation), borderBoxSize = _a.borderBoxSize, contentBoxSize = _a.contentBoxSize, devicePixelContentBoxSize = _a.devicePixelContentBoxSize;
       switch (observedBox) {
           case ResizeObserverBoxOptions$1.DEVICE_PIXEL_CONTENT_BOX:
               return devicePixelContentBoxSize;
@@ -10749,7 +10756,6 @@ var App = (function (exports) {
   };
 
   var gatherActiveObservationsAtDepth$1 = function (depth) {
-      cache$1.clear();
       resizeObservers$1.forEach(function processObserver(ro) {
           ro.activeTargets.splice(0, ro.activeTargets.length);
           ro.skippedTargets.splice(0, ro.skippedTargets.length);
@@ -10802,7 +10808,7 @@ var App = (function (exports) {
 
   var watching$1 = 0;
   var isWatching$1 = function () { return !!watching$1; };
-  var CATCH_FRAMES$1 = 60 / 5;
+  var CATCH_PERIOD$1 = 250;
   var observerConfig$1 = { attributes: true, characterData: true, childList: true, subtree: true };
   var events$1 = [
       'resize',
@@ -10820,6 +10826,10 @@ var App = (function (exports) {
       'blur',
       'focus'
   ];
+  var time$1 = function (timeout) {
+      if (timeout === void 0) { timeout = 0; }
+      return Date.now() + timeout;
+  };
   var scheduled$1 = false;
   var Scheduler$1 = (function () {
       function Scheduler() {
@@ -10827,12 +10837,14 @@ var App = (function (exports) {
           this.stopped = true;
           this.listener = function () { return _this.schedule(); };
       }
-      Scheduler.prototype.run = function (frames) {
+      Scheduler.prototype.run = function (timeout) {
           var _this = this;
+          if (timeout === void 0) { timeout = CATCH_PERIOD$1; }
           if (scheduled$1) {
               return;
           }
           scheduled$1 = true;
+          var until = time$1(timeout);
           queueResizeObserver$1(function () {
               var elementsHaveResized = false;
               try {
@@ -10840,14 +10852,15 @@ var App = (function (exports) {
               }
               finally {
                   scheduled$1 = false;
+                  timeout = until - time$1();
                   if (!isWatching$1()) {
                       return;
                   }
                   if (elementsHaveResized) {
-                      _this.run(60);
+                      _this.run(1000);
                   }
-                  else if (frames) {
-                      _this.run(frames - 1);
+                  else if (timeout > 0) {
+                      _this.run(timeout);
                   }
                   else {
                       _this.start();
@@ -10857,7 +10870,7 @@ var App = (function (exports) {
       };
       Scheduler.prototype.schedule = function () {
           this.stop();
-          this.run(CATCH_FRAMES$1);
+          this.run();
       };
       Scheduler.prototype.observe = function () {
           var _this = this;
@@ -10905,7 +10918,7 @@ var App = (function (exports) {
           };
       }
       ResizeObservation.prototype.isActive = function () {
-          var size = calculateBoxSize$1(this.target, this.observedBox);
+          var size = calculateBoxSize$1(this.target, this.observedBox, true);
           if (skipNotifyOnElement$1(this.target)) {
               this.lastReportedSize = size;
           }
@@ -10929,7 +10942,7 @@ var App = (function (exports) {
       return ResizeObserverDetail;
   }());
 
-  var observerMap$1 = new Map();
+  var observerMap$1 = new WeakMap();
   var getObservationIndex$1 = function (observationTargets, target) {
       for (var i = 0; i < observationTargets.length; i += 1) {
           if (observationTargets[i].target === target) {
@@ -10943,36 +10956,33 @@ var App = (function (exports) {
       }
       ResizeObserverController.connect = function (resizeObserver, callback) {
           var detail = new ResizeObserverDetail$1(resizeObserver, callback);
-          resizeObservers$1.push(detail);
           observerMap$1.set(resizeObserver, detail);
       };
       ResizeObserverController.observe = function (resizeObserver, target, options) {
-          if (observerMap$1.has(resizeObserver)) {
-              var detail = observerMap$1.get(resizeObserver);
-              if (getObservationIndex$1(detail.observationTargets, target) < 0) {
-                  detail.observationTargets.push(new ResizeObservation$1(target, options && options.box));
-                  updateCount$1(1);
-                  scheduler$1.schedule();
-              }
+          var detail = observerMap$1.get(resizeObserver);
+          var firstObservation = detail.observationTargets.length === 0;
+          if (getObservationIndex$1(detail.observationTargets, target) < 0) {
+              firstObservation && resizeObservers$1.push(detail);
+              detail.observationTargets.push(new ResizeObservation$1(target, options && options.box));
+              updateCount$1(1);
+              scheduler$1.schedule();
           }
       };
       ResizeObserverController.unobserve = function (resizeObserver, target) {
-          if (observerMap$1.has(resizeObserver)) {
-              var detail = observerMap$1.get(resizeObserver);
-              var index = getObservationIndex$1(detail.observationTargets, target);
-              if (index >= 0) {
-                  detail.observationTargets.splice(index, 1);
-                  updateCount$1(-1);
-              }
+          var detail = observerMap$1.get(resizeObserver);
+          var index = getObservationIndex$1(detail.observationTargets, target);
+          var lastObservation = detail.observationTargets.length === 1;
+          if (index >= 0) {
+              lastObservation && resizeObservers$1.splice(resizeObservers$1.indexOf(detail), 1);
+              detail.observationTargets.splice(index, 1);
+              updateCount$1(-1);
           }
       };
       ResizeObserverController.disconnect = function (resizeObserver) {
-          if (observerMap$1.has(resizeObserver)) {
-              var detail = observerMap$1.get(resizeObserver);
-              resizeObservers$1.splice(resizeObservers$1.indexOf(detail), 1);
-              observerMap$1.delete(resizeObserver);
-              updateCount$1(-detail.observationTargets.length);
-          }
+          var _this = this;
+          var detail = observerMap$1.get(resizeObserver);
+          detail.observationTargets.slice().forEach(function (ot) { return _this.unobserve(resizeObserver, ot.target); });
+          detail.activeTargets.splice(0, detail.activeTargets.length);
       };
       return ResizeObserverController;
   }());
@@ -11089,10 +11099,6 @@ var App = (function (exports) {
       return svg;
   }
 
-  const format2$1 = format$1(",.2f"), format1$1 = format$1(",.1f"), format0$1 = format$1(",.0f");
-  function formatNumber$1(v) {
-      return v < 1 ? format2$1(v) : v < 10 ? format1$1(v) : format0$1(v);
-  }
   class Sankey {
       constructor(options) {
           this.container = document.querySelector("body");
@@ -11110,11 +11116,17 @@ var App = (function (exports) {
           this.rw = 150;
           this.w = 200;
           this._extent = [0, 0]; // min/max node values
+          this._fp = new Intl.NumberFormat("en-GB", { style: "decimal" });
           this._linkGenerator = () => true;
           this._layerGap = 0;
           this._totalLayers = 0;
           if (options.margin !== undefined) {
-              this.margin = options.margin;
+              let m = options.margin;
+              m.left = isNaN(m.left) ? 0 : m.left;
+              m.right = isNaN(m.right) ? 0 : m.right;
+              m.top = isNaN(m.top) ? 0 : m.top;
+              m.bottom = isNaN(m.bottom) ? 0 : m.bottom;
+              this.margin = m;
           }
           if (options.container !== undefined) {
               this.container = options.container;
@@ -11172,22 +11184,24 @@ var App = (function (exports) {
        * draws the Sankey
        */
       draw() {
-          this._drawCanvas();
-          this._drawLinks();
-          this._drawNodes();
-          this._drawLabels();
+          this._drawCanvas()
+              ._drawNodes()
+              ._drawLinks()
+              ._drawLabels()
+              ._drawPlayback();
           return this;
       }
       /**
        * Recalculate internal values
        */
       initialise() {
-          this._nodeValueLayer();
-          this._setScale();
-          this._setNodeSize();
-          this._positionNodeByLayer();
-          this._positionNodeInLayer();
-          this._positionLinks();
+          this._nodeValueLayer()
+              ._scalingExtent()
+              ._scaling()
+              ._nodeSize()
+              ._positionNodeByLayer()
+              ._positionNodeInLayer()
+              ._positionLinks();
           return this;
       }
       /**
@@ -11199,6 +11213,396 @@ var App = (function (exports) {
           return `nodes:\n${nodes}\n\nlinks:\n${links}`;
       }
       // ***** PRIVATE METHODS
+      _drawCanvas() {
+          const sg = svg$1(this.container, {
+              height: this.h,
+              margin: this.margin,
+              width: this.w
+          });
+          sg.classList.add("sankey");
+          sg.id = "sankey" + Array.from(document.querySelectorAll(".sankey")).length;
+          const s = select$1(sg);
+          s.on("click", () => this.clearSelection());
+          const defs = s.select("defs");
+          const gb = defs.append("filter").attr("id", "blur");
+          gb.append("feGaussianBlur").attr("in", "SourceGraphic").attr("stdDeviation", 5);
+          return this;
+      }
+      _drawLabels() {
+          const canvas = select$1(this.container).select(".canvas");
+          const nodes = canvas.selectAll("g.node");
+          const fade = this.playback ? " shadow" : "";
+          const outerLabel = nodes.append("text")
+              .attr("class", (d) => "node-label outer" + (d.layer > 0 ? fade : ""))
+              .attr("dy", "0.35em")
+              .attr("opacity", 0);
+          if (this.orient === "horizontal") {
+              outerLabel
+                  .attr("x", (d) => d.x < (this.rw / 2) ? this.nodeSize + 6 : -6)
+                  .attr("y", (d) => d.h / 2)
+                  .attr("text-anchor", (d) => d.x + this.nodeSize > this.rw / 2 ? "end" : "start")
+                  .style("opacity", (d) => d.h > 20 ? null : 0)
+                  .text((d) => d.name);
+          }
+          else {
+              outerLabel
+                  .attr("x", (d) => d.w / 2)
+                  .attr("y", (d) => d.y < (this.rh / 2) ? this.nodeSize + 10 : -10)
+                  .attr("text-anchor", "middle")
+                  .text((d) => d.w > d.name.length * 7 ? d.name : "");
+          }
+          const innerLabel = nodes.append("text")
+              .attr("class", (d) => "node-label inner" + (d.layer > 0 ? fade : ""))
+              .attr("dy", "0.35em")
+              .attr("text-anchor", "middle")
+              .attr("opacity", 0);
+          if (this.orient === "horizontal") {
+              innerLabel
+                  .attr("x", (d) => -d.h / 2)
+                  .attr("y", () => this.nodeSize / 2)
+                  .attr("transform", "rotate(270)")
+                  .text((d) => d.h > 50 ? this._fp.format(d.value) : "");
+          }
+          else {
+              innerLabel
+                  .attr("x", (d) => d.w / 2)
+                  .attr("y", () => this.nodeSize / 2)
+                  .text((d) => d.w > 50 ? this._fp.format(d.value) : "");
+          }
+          const t1 = transition$1().duration(600);
+          if (this.orient === "horizontal") {
+              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
+              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
+          }
+          else {
+              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
+              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
+          }
+          return this;
+      }
+      _drawLinks() {
+          const svg = select$1(this.container).select("svg");
+          const id = svg.node().id;
+          const canvas = svg.select(".canvas");
+          const fade = this.playback ? " shadow" : "";
+          if (this.orient === "horizontal") {
+              this._linkGenerator = linkHorizontal()
+                  .source((d) => [d.nodeIn.x + this.nodeSize, d.y0])
+                  .target((d) => [d.nodeOut.x, d.y1])
+                  .x((d) => d[0])
+                  .y((d) => d[1]);
+          }
+          else {
+              this._linkGenerator = linkVertical()
+                  .source((d) => [d.y0, d.nodeIn.y + this.nodeSize])
+                  .target((d) => [d.y1, d.nodeOut.y])
+                  .x((d) => d[0])
+                  .y((d) => d[1]);
+          }
+          const links = canvas.append("g")
+              .attr("class", "links")
+              .selectAll("g")
+              .data(this.links).enter()
+              .append("g")
+              .attr("id", d => `${id}_${d.id}`)
+              .attr("class", "link" + fade)
+              .on("click", (d) => this._linkClickHandler(event$1.target));
+          this.links.forEach((lk) => {
+              lk.dom = document.getElementById(`${id}_${lk.id}`);
+          });
+          selectAll("g.links").lower();
+          const path = links
+              .append("path")
+              .attr("id", d => `${id}_p${d.id}`)
+              .attr("class", "link")
+              .attr("stroke", (d) => d.fill ? d.fill : d.nodeIn.fill)
+              .attr("stroke-width", (d) => d.w)
+              .attr("fill", "none");
+          links.append("title")
+              .text((d) => `${d.nodeIn.name} -> ${d.nodeOut.name} - ${this._fp.format(d.value)}`);
+          const t = transition$1().duration(600);
+          path.transition(t).delay(1000)
+              // @ts-ignore
+              .attr("d", d => this._linkGenerator(d));
+          return this;
+      }
+      _drawNodes() {
+          const self = this;
+          const svg = select$1(this.container).select("svg");
+          const id = svg.node().id;
+          const canvas = svg.select(".canvas");
+          const fade = this.playback ? " shadow" : "";
+          const nodes = canvas.append("g")
+              .attr("class", "nodes")
+              .selectAll("g.node")
+              .data(this.nodes).enter()
+              .append("g")
+              .attr("id", (d) => `${id}_${d.id}`)
+              .attr("class", (d) => "node" + (d.layer > 0 ? fade : ""))
+              .attr("transform", (d) => {
+              return this.orient === "horizontal"
+                  ? `translate(${d.x},${-d.h})`
+                  : `translate(${-d.w},${d.y})`;
+          })
+              .call(
+          // @ts-ignore
+          drag$1().clickDistance(1)
+              .on("start", dragstart)
+              .on("drag", dragmove)
+              .on("end", dragend))
+              .on("click", () => this._nodeClickHandler(event$1.currentTarget));
+          this.nodes.forEach((node) => {
+              node.dom = document.getElementById(`${id}_${node.id}`);
+          });
+          select$1("g.nodes").raise();
+          const rect = nodes.append("rect")
+              .attr("id", (d) => `${id}_r${d.id}`)
+              .attr("class", "node")
+              .attr("height", (d) => d.h + "px")
+              .attr("width", (d) => d.w + "px")
+              .attr("fill", (d) => d.fill)
+              .attr("x", 0)
+              .attr("y", 0)
+              .style("opacity", 0);
+          nodes.append("rect")
+              .attr("class", "shadow node")
+              .attr("height", (d) => (this.playback ? d.h : 0) + "px")
+              .attr("width", (d) => (this.playback ? d.w : 0) + "px")
+              .attr("x", 0)
+              .attr("y", 0);
+          const t1 = transition$1().duration(600);
+          rect.transition(t1).delay((d) => d.layer * 100)
+              .style("opacity", 1);
+          nodes.transition(t1)
+              .attr("transform", (d) => `translate(${d.x} ${d.y})`);
+          nodes.append("title")
+              .text((d) => `${d.name} - ${this._fp.format(d.value)}`);
+          function dragstart(d) {
+              if (!d.__x) {
+                  d.__x = event$1.x;
+              }
+              if (!d.__y) {
+                  d.__y = event$1.y;
+              }
+              if (!d.__x0) {
+                  d.__x0 = d.x;
+              }
+              if (!d.__y0) {
+                  d.__y0 = d.y;
+              }
+          }
+          function dragmove(d) {
+              select$1(this)
+                  .attr("transform", function (d) {
+                  const dx = event$1.x - d.__x;
+                  const dy = event$1.y - d.__y;
+                  // x direction
+                  if (self.nodeMoveX) {
+                      d.x = d.__x0 + dx;
+                      if (d.x < 0) {
+                          d.x = 0;
+                      }
+                  }
+                  // y direction
+                  if (self.nodeMoveY) {
+                      d.y = d.__y0 + dy;
+                      if (d.y < 0) {
+                          d.y = 0;
+                      }
+                  }
+                  return `translate(${d.x}, ${d.y})`;
+              });
+              self._positionLinks();
+              selectAll("path.link")
+                  .attr("d", d => self._linkGenerator(d));
+          }
+          function dragend(d) {
+              delete d.__x;
+              delete d.__y;
+              delete d.__x0;
+              delete d.__x1;
+              delete d.__y0;
+              delete d.__y1;
+          }
+          return this;
+      }
+      _drawPlayback() {
+          if (this.playback) {
+              this.nodes.forEach((node) => {
+                  if (node.story && node.linksOut.length > 0) {
+                      const c = select$1(node.dom).append("circle")
+                          .attr("class", "playback-prompt")
+                          .attr("cx", node.w / 2)
+                          .attr("cy", node.h / 2)
+                          .attr("filter", "url(#blur)")
+                          .attr("r", 0)
+                          .on("click", () => this._playbackClickHandler(event$1.currentTarget));
+                      c.append("title").text("View notes about this flow stage");
+                      c.transition().duration(3000).attr("r", 15);
+                  }
+              });
+          }
+          return this;
+      }
+      /**
+       * Creates the initial data structures
+       */
+      _initDataStructure(nodes, links) {
+          nodes.forEach((node, i) => {
+              const n = node;
+              n.h = 0; // height
+              n.id = i + 1;
+              n.layer = -1; // denotes membership to a visual grouping
+              n.linksIn = []; // replaces source in other sankey models
+              n.linksOut = []; // ditto target
+              n.w = 0; // width
+              n.x = 0; // position onscreen
+              n.y = 0;
+              this.nodes.push(n);
+          });
+          links.forEach((link, i) => {
+              const l = link;
+              l.nodeIn = this.nodes[link.source]; // replaces source in other sankey models
+              l.nodeOut = this.nodes[link.target]; // ditto target
+              l.id = "L" + (i + 1);
+              l.w = 0; // width
+              l.y0 = 0; // value at source node (horizontal: top right y, vertical: bottom left x)
+              l.y1 = 0; // value at target node (horizontal: bottom left y, vertical; top right x)
+              this.links.push(l);
+              this.links[i].nodeIn.linksOut.push(this.links[i]);
+              this.links[i].nodeOut.linksIn.push(this.links[i]);
+          });
+      }
+      _linkClickHandler(el) {
+          event$1.stopPropagation();
+          this.clearSelection();
+          window.dispatchEvent(new CustomEvent("link-selected", { detail: el }));
+          select$1(el).classed("selected", true);
+      }
+      _nodeClickHandler(el) {
+          event$1.stopPropagation();
+          this.clearSelection();
+          const activeNode = select$1(el);
+          const dt = activeNode.datum();
+          window.dispatchEvent(new CustomEvent("node-selected", { detail: el }));
+          dt.linksIn.forEach((link) => {
+              select$1(link.dom).select("path").classed("selected", true);
+          });
+          dt.linksOut.forEach((link) => {
+              select$1(link.dom).select("path").classed("selected", true);
+          });
+      }
+      _playbackClickHandler(el) {
+          event$1.stopPropagation();
+          this.clearSelection();
+          const button = select$1(el);
+          button.transition().duration(1000)
+              .attr("r", 0)
+              .transition().duration(0)
+              .remove();
+          const activeNode = select$1(el.parentNode);
+          const dt = activeNode.datum();
+          const narrate = [];
+          if (dt.story) {
+              narrate.push(dt);
+          }
+          if (dt.linksOut.length > 0) {
+              dt.linksOut.forEach((link) => {
+                  select$1(link.dom).classed("shadow", false);
+                  if (link.story) {
+                      narrate.push(link);
+                  }
+              });
+              this.nodes.forEach((node) => {
+                  let sum = 0, breakdown = false;
+                  if (node.linksIn.length > 0 || node === dt) {
+                      node.linksIn.forEach((link) => {
+                          if (select$1(link.dom).classed("shadow")) {
+                              sum += link.value;
+                          }
+                          else {
+                              breakdown = true;
+                          }
+                      });
+                      if (breakdown || (node === dt && node.linksIn.length === 0)) {
+                          sum = this._scale(sum);
+                          sum = sum >= 0 ? sum : 0;
+                          const shadow = select$1(node.dom).select(".shadow");
+                          if (this.orient === "horizontal") {
+                              shadow.transition().duration(500)
+                                  .attr("height", `${sum}px`);
+                          }
+                          else {
+                              let x = parseFloat(select$1(node.dom).attr("x"));
+                              shadow.transition().duration(500)
+                                  .attr("width", `${sum}px`)
+                                  .attr("x", x + sum);
+                          }
+                          if (sum === 0) {
+                              shadow.transition().delay(600)
+                                  .remove();
+                          }
+                      }
+                  }
+              });
+          }
+          window.dispatchEvent(new CustomEvent("node-playback", { detail: narrate }));
+      }
+      /**
+       * Sets height and width of node
+       */
+      _nodeSize() {
+          this.nodes.forEach((node) => {
+              if (this.orient === "horizontal") {
+                  node.h = Math.max(1, this._scale(node.value));
+                  node.w = this.nodeSize;
+              }
+              else {
+                  node.h = this.nodeSize;
+                  node.w = Math.max(1, this._scale(node.value));
+              }
+          });
+          return this;
+      }
+      /**
+       * Determines each node dimension and layer attribution and finally determines node order within layer
+       */
+      _nodeValueLayer() {
+          const track = new Map();
+          let max = 0;
+          this.nodes.forEach((node) => {
+              // calculate value if not already provided
+              if (node.value === undefined) {
+                  node.value = Math.max(1, node.linksIn.map(link => link.value).reduce((ac, s) => ac + s, 0), node.linksOut.map(link => link.value).reduce((ac, s) => ac + s, 0));
+              }
+              // calculate layer value
+              if (node.linksIn.length === 0) {
+                  node.layer = 0;
+                  track.set(node.id, []);
+              }
+              node.linksOut.forEach((link) => {
+                  if (track.has(link.nodeOut.id)) {
+                      const parent = track.get(node.id);
+                      if (parent.findIndex((e) => e === link.nodeOut.id) === -1) {
+                          link.nodeOut.layer = node.layer + 1;
+                          const a = track.get(link.nodeOut.id);
+                          a.push(node.id);
+                          track.set(link.nodeOut.id, a);
+                      }
+                  }
+                  else {
+                      link.nodeOut.layer = node.layer + 1;
+                      track.set(link.nodeOut.id, [node.id]);
+                  }
+                  max = link.nodeOut.layer > max ? link.nodeOut.layer : max;
+              });
+          });
+          this._totalLayers = max;
+          this._layerGap = (this.orient === "horizontal" ? this.rw : this.rh) / this._totalLayers;
+          // sort: by layer asc then by size then by a-z name
+          this.nodes.sort((a, b) => a.layer - b.layer || b.value - a.value || (b.name > a.name ? -1 : 1));
+          return this;
+      }
       /**
        * Positions links relative to sourcec and destination nodes
        */
@@ -11223,6 +11627,7 @@ var App = (function (exports) {
               source.set(link.nodeIn.id, link.y0 + (link.w / 2));
               target.set(link.nodeOut.id, link.y1 + (link.w / 2));
           });
+          return this;
       }
       /**
        * spreads the nodes across the chart space by layer
@@ -11250,6 +11655,7 @@ var App = (function (exports) {
                   }
               });
           }
+          return this;
       }
       /**
        * spreads the nodes within layer
@@ -11303,42 +11709,20 @@ var App = (function (exports) {
                   });
               }
           });
-      }
-      /**
-       * Sets height and width of node
-       */
-      _setNodeSize() {
-          this.nodes.forEach((node) => {
-              if (this.orient === "horizontal") {
-                  node.h = this._scale(node.value);
-                  node.w = this.nodeSize;
-              }
-              else {
-                  node.h = this.nodeSize;
-                  node.w = this._scale(node.value);
-              }
-          });
-      }
-      /**
-       * Determines the scale and layer gap of nodes
-       */
-      _setScale() {
-          this._calcScalingExtent();
-          this._calcScaling();
+          return this;
       }
       /**
        * Calculates the chart scale
        */
-      _calcScaling() {
+      _scaling() {
           const rng = [0, this.orient === "horizontal" ? this.rh : this.rw];
-          this._scale = linear$1$1()
-              .domain([0, this._extent[1]])
-              .range(rng);
+          this._scale = linear$1$1().domain(this._extent).range(rng);
+          return this;
       }
       /**
        * Determines the minimum and maximum extent values to scale nodes by
        */
-      _calcScalingExtent() {
+      _scalingExtent() {
           this._extent[0] = this.nodes.reduce((ac, n) => (ac === undefined || n.value < ac) ? n.value : ac, 0);
           let max = this._extent[0], layer = 0, runningTotal = 0;
           this.nodes.forEach((node) => {
@@ -11352,277 +11736,7 @@ var App = (function (exports) {
               }
           });
           this._extent[1] = (runningTotal > max ? runningTotal : max) + (this.padding * (this.nodes.length * 2.5));
-      }
-      _drawCanvas() {
-          const sg = svg$1(this.container, {
-              height: this.h,
-              margin: this.margin,
-              width: this.w
-          });
-          sg.classList.add("sankey");
-          sg.id = "sankey" + Array.from(document.querySelectorAll(".sankey")).length;
-          select$1(sg).on("click", () => this.clearSelection());
-      }
-      _drawLabels() {
-          const canvas = select$1(this.container).select(".canvas");
-          const nodes = canvas.selectAll("g.node");
-          const outerLabel = nodes.append("text")
-              .attr("class", "node-label")
-              .attr("dy", "0.35em")
-              .attr("opacity", 0);
-          if (this.orient === "horizontal") {
-              outerLabel
-                  .attr("x", (d) => d.x < (this.rw / 2) ? this.nodeSize + 6 : -6)
-                  .attr("y", (d) => this._scale(d.value) / 2)
-                  .attr("text-anchor", (d) => d.x + this.nodeSize > this.rw / 2 ? "end" : "start")
-                  .style("opacity", (d) => this._scale(d.value) > 20 ? null : 0)
-                  .text((d) => d.name);
-          }
-          else {
-              outerLabel
-                  .attr("x", (d) => this._scale(d.value) / 2)
-                  .attr("y", (d) => d.y < (this.rh / 2) ? this.nodeSize + 10 : -10)
-                  .attr("text-anchor", "middle")
-                  .text((d) => this._scale(d.value) > d.name.length * 7 ? d.name : "");
-          }
-          const innerLabel = nodes.append("text")
-              .attr("class", "node-label")
-              .attr("dy", "0.35em")
-              .attr("opacity", 0);
-          if (this.orient === "horizontal") {
-              innerLabel
-                  .attr("x", (d) => -this._scale(d.value) / 2)
-                  .attr("y", (d) => this.nodeSize / 2)
-                  .attr("text-anchor", "middle")
-                  .attr("transform", "rotate(270)")
-                  .text((d) => this._scale(d.value) > 50 ? formatNumber$1(d.value) : "");
-          }
-          else {
-              innerLabel
-                  .attr("x", (d) => this._scale(d.value) / 2)
-                  .attr("y", (d) => this.nodeSize / 2)
-                  .attr("text-anchor", "middle")
-                  .text((d) => this._scale(d.value) > 50 ? formatNumber$1(d.value) : "");
-          }
-          const t1 = transition$1().duration(600);
-          if (this.orient === "horizontal") {
-              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
-              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
-          }
-          else {
-              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
-              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
-          }
-      }
-      _drawLinks() {
-          const svg = select$1(this.container).select("svg");
-          const id = svg.node().id;
-          const canvas = svg.select(".canvas");
-          if (this.orient === "horizontal") {
-              this._linkGenerator = linkHorizontal()
-                  .source((d) => [d.nodeIn.x + this.nodeSize, d.y0])
-                  .target((d) => [d.nodeOut.x, d.y1])
-                  .x((d) => d[0])
-                  .y((d) => d[1]);
-          }
-          else {
-              this._linkGenerator = linkVertical()
-                  .source((d) => [d.y0, d.nodeIn.y + this.nodeSize])
-                  .target((d) => [d.y1, d.nodeOut.y])
-                  .x((d) => d[0])
-                  .y((d) => d[1]);
-          }
-          const linkCollection = canvas.append("g")
-              .selectAll("g")
-              .data(this.links)
-              .enter()
-              .append("g")
-              .attr("id", d => `${id}_${d.id}`)
-              .attr("class", "link")
-              .on("click", (d) => this._linkClickHandler(event$1.target));
-          const path = linkCollection
-              .append("path")
-              .attr("class", "link")
-              .attr("stroke", (d) => d.fill ? d.fill : d.nodeIn.fill)
-              .attr("stroke-width", (d) => d.w)
-              .attr("fill", "none");
-          linkCollection.append("title")
-              .text((d) => `${d.nodeIn.name} -> ${d.nodeOut.name} - ${formatNumber$1(d.value)}`);
-          const t = transition$1().duration(600);
-          path.transition(t).delay(1000)
-              // @ts-ignore
-              .attr("d", d => this._linkGenerator(d));
-      }
-      _drawNodes() {
-          const self = this;
-          const svg = select$1(this.container).select("svg");
-          const id = svg.node().id;
-          const canvas = svg.select(".canvas");
-          const nodes = canvas.append("g")
-              .selectAll("g.node")
-              .data(this.nodes).enter()
-              .append("g")
-              .attr("id", d => `${id}_${d.id}`)
-              .attr("class", "node")
-              .attr("transform", d => {
-              return this.orient === "horizontal"
-                  ? `translate(${d.x},${-d.h})`
-                  : `translate(${-d.w},${d.y})`;
-          })
-              .call(
-          // @ts-ignore
-          drag$1().clickDistance(1)
-              .on("start", dragstart)
-              .on("drag", dragmove)
-              .on("end", dragend))
-              .on("click", () => this._nodeClickHandler(event$1.currentTarget));
-          const rect = nodes.append("rect")
-              .attr("class", "node")
-              .attr("height", (d) => d.h + "px")
-              .attr("width", (d) => d.w + "px")
-              .attr("fill", (d) => d.fill)
-              .attr("x", 0)
-              .attr("y", 0)
-              .style("opacity", 0);
-          const t1 = transition$1().duration(600);
-          rect.transition(t1).delay((d) => d.layer * 100)
-              .style("opacity", 1);
-          nodes.transition(t1)
-              .attr("transform", (d) => `translate(${d.x} ${d.y})`);
-          nodes.append("title")
-              .text((d) => `${d.name} - ${formatNumber$1(d.value)}`);
-          function dragstart(d) {
-              if (!d.__x) {
-                  d.__x = event$1.x;
-              }
-              if (!d.__y) {
-                  d.__y = event$1.y;
-              }
-              if (!d.__x0) {
-                  d.__x0 = d.x;
-              }
-              if (!d.__y0) {
-                  d.__y0 = d.y;
-              }
-          }
-          function dragmove(d) {
-              select$1(this)
-                  .attr("transform", function (d) {
-                  const dx = event$1.x - d.__x;
-                  const dy = event$1.y - d.__y;
-                  // x direction
-                  if (self.nodeMoveX) {
-                      d.x = d.__x0 + dx;
-                      if (d.x < 0) {
-                          d.x = 0;
-                      }
-                  }
-                  // y direction
-                  if (self.nodeMoveY) {
-                      d.y = d.__y0 + dy;
-                      if (d.y < 0) {
-                          d.y = 0;
-                      }
-                  }
-                  return `translate(${d.x}, ${d.y})`;
-              });
-              self._positionLinks();
-              selectAll("path.link")
-                  .attr("d", d => self._linkGenerator(d));
-          }
-          function dragend(d) {
-              delete d.__x;
-              delete d.__y;
-              delete d.__x0;
-              delete d.__x1;
-              delete d.__y0;
-              delete d.__y1;
-          }
-      }
-      /**
-       * Creates the initial data structures
-       */
-      _initDataStructure(nodes, links) {
-          nodes.forEach((node, i) => {
-              const n = node;
-              n.h = 0; // height
-              n.id = i;
-              n.layer = -1; // denotes membership to a visual grouping
-              n.linksIn = []; // replaces source in other sankey models
-              n.linksOut = []; // ditto target
-              n.w = 0; // width
-              n.x = 0; // position onscreen
-              n.y = 0;
-              this.nodes.push(n);
-          });
-          links.forEach((link, i) => {
-              const l = link;
-              l.nodeIn = this.nodes[link.source]; // replaces source in other sankey models
-              l.nodeOut = this.nodes[link.target]; // ditto target
-              l.id = `${l.nodeIn.id}->${l.nodeOut.id}`;
-              l.w = 0; // width
-              l.y0 = 0; // value at source node (horizontal: top right y, vertical: bottom left x)
-              l.y1 = 0; // value at target node (horizontal: bottom left y, vertical; top right x)
-              this.links.push(l);
-              this.links[i].nodeIn.linksOut.push(this.links[i]);
-              this.links[i].nodeOut.linksIn.push(this.links[i]);
-          });
-      }
-      _linkClickHandler(el) {
-          event$1.stopPropagation();
-          this.clearSelection();
-          window.dispatchEvent(new CustomEvent("link-selected", { detail: el }));
-          select$1(el).classed("selected", true);
-      }
-      _nodeClickHandler(el) {
-          event$1.stopPropagation();
-          this.clearSelection();
-          const dt = select$1(el).datum();
-          window.dispatchEvent(new CustomEvent("node-selected", { detail: el }));
-          selectAll("g.link")
-              .each((d, i, n) => {
-              if (d.nodeIn === dt || d.nodeOut === dt) {
-                  select$1(n[i]).select("path").classed("selected", true);
-              }
-          });
-      }
-      /**
-       * Determines each node dimension and layer attribution and finally determines node order within layer
-       */
-      _nodeValueLayer() {
-          const track = new Map();
-          let max = 0;
-          this.nodes.forEach((node) => {
-              // calculate value if not already provided
-              if (node.value === undefined) {
-                  node.value = Math.max(node.linksIn.map(link => link.value).reduce((ac, s) => ac + s, 0), node.linksOut.map(link => link.value).reduce((ac, s) => ac + s, 0));
-              }
-              // calculate layer value
-              if (node.linksIn.length === 0) {
-                  node.layer = 0;
-                  track.set(node.id, []);
-              }
-              node.linksOut.forEach((link) => {
-                  if (track.has(link.nodeOut.id)) {
-                      const parent = track.get(node.id);
-                      if (parent.findIndex((e) => e === link.nodeOut.id) === -1) {
-                          link.nodeOut.layer = node.layer + 1;
-                          const a = track.get(link.nodeOut.id);
-                          a.push(node.id);
-                          track.set(link.nodeOut.id, a);
-                      }
-                  }
-                  else {
-                      link.nodeOut.layer = node.layer + 1;
-                      track.set(link.nodeOut.id, [node.id]);
-                  }
-                  max = link.nodeOut.layer > max ? link.nodeOut.layer : max;
-              });
-          });
-          this._totalLayers = max;
-          this._layerGap = (this.orient === "horizontal" ? this.rw : this.rh) / this._totalLayers;
-          // sort: by layer asc then by size then by a-z name
-          this.nodes.sort((a, b) => a.layer - b.layer || b.value - a.value || (b.name > a.name ? -1 : 1));
+          return this;
       }
   }
 
@@ -11650,6 +11764,7 @@ var App = (function (exports) {
   const color$2 = sequential(interpolateViridis).domain([0, 1]);
   const chart = document.getElementById("chart");
   const desc = (a, b) => a.value > b.value ? -1 : a.value < b.value ? 1 : 0;
+  const fp = new Intl.NumberFormat("en-GB", { style: "decimal" });
   /**
    * @param config
    */
@@ -11712,9 +11827,9 @@ var App = (function (exports) {
                   return ns.value;
               })
                   .reduce((ac, v) => ac + v, 0);
-              text = `<div>${d.name}</div><div>Incoming: ${formatNumber(src)} calls</div>`;
-              text += `<div>Outgoing: ${formatNumber(tgt)} calls</div>`;
-              text += `Out/In: ${(src === 0 || tgt === 0) ? "---" : formatNumber(tgt / src)}`;
+              text = `<div>${d.name}</div><div>Incoming: ${fp.format(src)} calls</div>`;
+              text += `<div>Outgoing: ${fp.format(tgt)} calls</div>`;
+              text += `Out/In: ${(src === 0 || tgt === 0) ? "---" : fp.format(tgt / src)}`;
           }
           config.breakdown.message = text;
           config.breakdown.chart = [];
@@ -11734,7 +11849,7 @@ var App = (function (exports) {
           const d = g.datum();
           const sg = select(chart).select("svg");
           let text = `<div>${d.nodeIn.name} → ${d.nodeOut.name} calls</div>`;
-          text += `<div>Outgoing: ${formatNumber(d.value)} calls</div>`;
+          text += `<div>Outgoing: ${fp.format(d.value)} calls</div>`;
           config.breakdown.message = text;
           config.breakdown.chart = [];
           config.breakdown.display = [];
@@ -11802,7 +11917,8 @@ var App = (function (exports) {
           nodes: config.db.sankey.nodes,
           nodeSize: 30,
           orient: config.filters.orientation.ltr ? "horizontal" : "vertical",
-          padding: config.filters.density
+          padding: config.filters.density,
+          playback: false
       });
       config.sankey.draw();
       setTimeout(() => window.dispatchEvent(new CustomEvent("show-legend")), 1500);
