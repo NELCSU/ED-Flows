@@ -12,7 +12,7 @@
     "moduleResolution": "node",
     "removeComments": false,
     "strict": true,
-    "target": "es2015",
+    "target": "es5",
     "tsBuildInfoFile": ".buildcache/default",
     "typeRoots": ["./node_modules/@types", "./src/typings"]
   },

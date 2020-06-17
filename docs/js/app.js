@@ -8,12 +8,12 @@ var App = (function (exports) {
       if (window.innerWidth < 800 || window.innerHeight < 600) {
           alert("The recommended minimum resolution is 800 x 600.\n Yours is " + window.innerWidth + " x " + window.innerHeight + ".");
       }
-      setTimeout(() => {
-          const loading = document.querySelector(".loading");
+      setTimeout(function () {
+          var loading = document.querySelector(".loading");
           if (loading) {
               document.body.removeChild(loading);
           }
-          const content = document.getElementById("content");
+          var content = document.getElementById("content");
           content.style.visibility = "visible";
           content.style.opacity = "1";
       }, 500);
@@ -24,17 +24,17 @@ var App = (function (exports) {
    * @param config
    */
   function initUIThemes(config) {
-      const select = document.getElementById("Colors");
+      var select = document.getElementById("Colors");
       if (select) {
           select.title = "Select a color scheme for this page";
           config.themes.forEach(function (theme, n) {
-              const opt = document.createElement("option");
+              var opt = document.createElement("option");
               opt.value = "" + n;
               opt.text = theme;
               select.appendChild(opt);
           });
-          select.addEventListener("input", () => {
-              const i = getThemeId();
+          select.addEventListener("input", function () {
+              var i = getThemeId();
               changeStyle(i);
           });
           changeStyle(0);
@@ -44,12 +44,12 @@ var App = (function (exports) {
        * @param i
        */
       function changeStyle(i) {
-          const styles = document.createElement("link");
+          var styles = document.createElement("link");
           styles.id = "theme-stylesheet";
           styles.type = "text/css";
           styles.rel = "stylesheet";
           styles.href = "./css/themes/" + config.themes[i] + ".css";
-          const old = document.getElementById("theme-stylesheet");
+          var old = document.getElementById("theme-stylesheet");
           if (old) {
               document.head.removeChild(old);
           }
@@ -59,8 +59,8 @@ var App = (function (exports) {
        * Gets the selected value from user"s theme choice
        */
       function getThemeId() {
-          let choice = 0;
-          const v = select === null || select === void 0 ? void 0 : select.options[select.selectedIndex].value;
+          var choice = 0;
+          var v = select === null || select === void 0 ? void 0 : select.options[select.selectedIndex].value;
           if (v) {
               choice = parseInt(v);
           }
@@ -109,10 +109,10 @@ var App = (function (exports) {
    * Returns TURLHash object with values from current URL hash value
    */
   function getQueryHash(config) {
-      const re = /\w+\$[\w\-]+/gmi;
-      let m;
+      var re = /\w+\$[\w\-]+/gmi;
+      var m;
       while ((m = re.exec(window.location.hash)) !== null) {
-          let p = m[0].split("$");
+          var p = m[0].split("$");
           switch (p[0]) {
               case "call":
                   config.querystring.call = p[1];
@@ -131,10 +131,10 @@ var App = (function (exports) {
    * @param config
    */
   function setQueryHash(config) {
-      const call = document.querySelector("input[name='r1']:checked");
-      const day = document.getElementById("Day");
-      const org = document.getElementById("Organisation");
-      let myhash = "";
+      var call = document.querySelector("input[name='r1']:checked");
+      var day = document.getElementById("Day");
+      var org = document.getElementById("Organisation");
+      var myhash = "";
       if (call && call.value) {
           myhash = "call$" + call.value + "+";
       }
@@ -154,24 +154,24 @@ var App = (function (exports) {
    */
   function initCallList(config) {
       getQueryHash(config);
-      const parent = document.querySelector(".call-options");
+      var parent = document.querySelector(".call-options");
       if (parent) {
           parent.innerHTML = "";
-          let group = "", grpdiv, label;
-          let control;
-          config.filters.calls.forEach((call) => {
-              if (group !== call.group) {
-                  group = call.group;
-                  grpdiv = document.createElement("div");
-                  grpdiv.classList.add("panel-row");
-                  parent.appendChild(grpdiv);
-                  label = document.createElement("label");
-                  label.textContent = group + ":";
-                  grpdiv.appendChild(label);
-                  control = document.createElement("div");
-                  grpdiv.appendChild(control);
+          var group_1 = "", grpdiv_1, label_1;
+          var control_1;
+          config.filters.calls.forEach(function (call) {
+              if (group_1 !== call.group) {
+                  group_1 = call.group;
+                  grpdiv_1 = document.createElement("div");
+                  grpdiv_1.classList.add("panel-row");
+                  parent.appendChild(grpdiv_1);
+                  label_1 = document.createElement("label");
+                  label_1.textContent = group_1 + ":";
+                  grpdiv_1.appendChild(label_1);
+                  control_1 = document.createElement("div");
+                  grpdiv_1.appendChild(control_1);
               }
-              let option = document.createElement("input");
+              var option = document.createElement("input");
               option.type = "radio";
               option.id = call.id;
               option.value = call.value;
@@ -180,11 +180,11 @@ var App = (function (exports) {
               if (config.querystring.call === option.value) {
                   option.checked = true;
               }
-              option.addEventListener("click", () => {
+              option.addEventListener("click", function () {
                   window.dispatchEvent(new CustomEvent("call-selected", { detail: option.title }));
                   window.dispatchEvent(new CustomEvent("filter-action"));
               });
-              control.appendChild(option);
+              control_1.appendChild(option);
           });
       }
   }
@@ -193,20 +193,20 @@ var App = (function (exports) {
    * @param config
    */
   function updateCallList(config) {
-      const files = Object.keys(config.db.zip.files);
-      let ctrl;
-      config.filters.calls.forEach((call) => {
+      var files = Object.keys(config.db.zip.files);
+      var ctrl;
+      config.filters.calls.forEach(function (call) {
           ctrl = document.getElementById(call.id);
           if (ctrl) {
               ctrl.disabled = true;
               ctrl.checked = false;
           }
       });
-      let selected = false;
-      for (let i = 0; i < files.length; i++) {
-          let key = right(files[i], 7);
+      var selected = false;
+      var _loop_1 = function (i) {
+          var key = right(files[i], 7);
           key = left(key, 2);
-          let found = config.filters.calls.findIndex((e) => e.value === key);
+          var found = config.filters.calls.findIndex(function (e) { return e.value === key; });
           if (found > -1) {
               ctrl = document.getElementById(config.filters.calls[found].id);
               if (ctrl) {
@@ -218,6 +218,9 @@ var App = (function (exports) {
                   }
               }
           }
+      };
+      for (var i = 0; i < files.length; i++) {
+          _loop_1(i);
       }
   }
 
@@ -225,9 +228,9 @@ var App = (function (exports) {
    * @param config
    */
   function initDensitySlider(config) {
-      const density = document.getElementById("Density");
+      var density = document.getElementById("Density");
       config.filters.density = 5;
-      density.addEventListener("change", (e) => {
+      density.addEventListener("change", function (e) {
           config.filters.density = +e.target.value;
           window.dispatchEvent(new CustomEvent("filter-action"));
       });
@@ -4270,11 +4273,11 @@ var App = (function (exports) {
    * @param config
    */
   function initSankeyLegend(config) {
-      const legShowHide = document.getElementById("LegendShowHide");
+      var legShowHide = document.getElementById("LegendShowHide");
       function hide() {
-          const svg = document.querySelector("#chart > svg");
-          const canvas = select(svg).select("g.canvas");
-          const legend = canvas.select("g.chart-legend");
+          var svg = document.querySelector("#chart > svg");
+          var canvas = select(svg).select("g.canvas");
+          var legend = canvas.select("g.chart-legend");
           legend
               .transition().duration(500)
               .style("opacity", 0)
@@ -4283,10 +4286,10 @@ var App = (function (exports) {
           legShowHide.checked = false;
       }
       function resize() {
-          const svg = select("#chart > svg");
-          const canvas = svg.selectAll("g.canvas");
-          const legend = canvas.selectAll("g.chart-legend");
-          const rect = legend.selectAll("rect");
+          var svg = select("#chart > svg");
+          var canvas = svg.selectAll("g.canvas");
+          var legend = canvas.selectAll("g.chart-legend");
+          var rect = legend.selectAll("rect");
           if (legend.classed("ready")) {
               legend.classed("ready", false);
               legend
@@ -4295,7 +4298,7 @@ var App = (function (exports) {
                   .style("opacity", null);
               rect
                   .transition().duration(500)
-                  .attr("height", (d) => d.height + "px");
+                  .attr("height", function (d) { return d.height + "px"; });
           }
           else {
               legend.classed("ready", true);
@@ -4305,34 +4308,34 @@ var App = (function (exports) {
                   .style("opacity", 0);
               rect
                   .transition().duration(500)
-                  .attr("height", (d) => d.minheight + "px");
+                  .attr("height", function (d) { return d.minheight + "px"; });
           }
       }
       /**
        * @link https://observablehq.com/@d3/voronoi-labels
        */
       function show() {
-          const svg = document.querySelector("#chart > svg");
-          const canvas = select(svg).select("g.canvas");
-          const box = svg.getBoundingClientRect();
-          const h = box.height;
-          const w = box.width;
-          const rh = config.legend.map(leg => leg.label.length * 26).reduce((ac, le) => ac + le, 0);
-          const rw = 250;
-          const m = { bottom: 10, left: 20, right: 20, top: 10 };
+          var svg = document.querySelector("#chart > svg");
+          var canvas = select(svg).select("g.canvas");
+          var box = svg.getBoundingClientRect();
+          var h = box.height;
+          var w = box.width;
+          var rh = config.legend.map(function (leg) { return leg.label.length * 26; }).reduce(function (ac, le) { return ac + le; }, 0);
+          var rw = 250;
+          var m = { bottom: 10, left: 20, right: 20, top: 10 };
           // determine the least node dense area of chart
-          let xy = [];
-          const nodes = canvas.selectAll("g.node").data();
-          nodes.forEach((d) => {
+          var xy = [];
+          var nodes = canvas.selectAll("g.node").data();
+          nodes.forEach(function (d) {
               xy.push([d.x, d.y]);
           });
-          const delaunay = Delaunay.from(xy);
-          const voronoi = delaunay.voronoi([-1, -1, w - m.left - m.right + 1, h - m.top - m.bottom + 1]);
-          const cells = xy.map((d, i) => [d, voronoi.cellPolygon(i)]);
-          let bx, area = 0;
-          cells.forEach((cell) => {
+          var delaunay = Delaunay.from(xy);
+          var voronoi = delaunay.voronoi([-1, -1, w - m.left - m.right + 1, h - m.top - m.bottom + 1]);
+          var cells = xy.map(function (d, i) { return [d, voronoi.cellPolygon(i)]; });
+          var bx, area = 0;
+          cells.forEach(function (cell) {
               try {
-                  const a = polygonLength(cell[1]);
+                  var a = polygonLength(cell[1]);
                   if (a > area) {
                       area = a;
                       bx = cell[1];
@@ -4340,23 +4343,23 @@ var App = (function (exports) {
               }
               catch (_a) { }
           });
-          let [x, y] = polygonCentroid(bx);
+          var _a = polygonCentroid(bx), x = _a[0], y = _a[1];
           x = x > w / 2 ? w - rw - m.right : 0 + m.left;
           y = y > h / 2 ? h - rh - m.bottom : 0 + m.top;
           //
-          const legend = canvas.append("g")
+          var legend = canvas.append("g")
               .datum({ x: x, y: y })
               .style("opacity", 0)
               .classed("chart-legend", true);
           /*// DEBUG
           canvas.append("path").attr("fill", "none").attr("stroke", "#900").attr("d", voronoi.render());
           canvas.append("path").attr("d", delaunay.renderPoints(undefined, 2));*/
-          const t = transition().duration(500);
+          var t = transition().duration(500);
           legend.transition(t).style("opacity", 1);
           function dragged(d) {
               d.x += event.dx;
               d.y += event.dy;
-              legend.attr("transform", (d) => `translate(${[d.x, d.y]})`);
+              legend.attr("transform", function (d) { return "translate(" + [d.x, d.y] + ")"; });
           }
           // @ts-ignore
           legend.call(drag().on("drag", dragged));
@@ -4365,7 +4368,7 @@ var App = (function (exports) {
               .enter()
               .append("rect")
               .attr("width", rw + "px")
-              .attr("height", (d) => d.height + "px")
+              .attr("height", function (d) { return d.height + "px"; })
               .attr("x", 0)
               .attr("y", 0)
               .classed("chart-legend", true);
@@ -4374,7 +4377,7 @@ var App = (function (exports) {
               .attr("y", 15)
               .attr("text-anchor", "middle")
               .text("legend");
-          const resizelink = legend.append("text")
+          var resizelink = legend.append("text")
               .attr("class", "legend-action")
               .attr("x", rw - 30)
               .attr("y", 15)
@@ -4382,7 +4385,7 @@ var App = (function (exports) {
               .on("click", resize);
           resizelink.append("title")
               .text("Grow/shrink legend");
-          const close = legend.append("text")
+          var close = legend.append("text")
               .attr("class", "legend-action")
               .attr("x", rw - 15)
               .attr("y", 15)
@@ -4390,8 +4393,8 @@ var App = (function (exports) {
               .on("click", closeHandler);
           close.append("title")
               .text("Close legend");
-          let lasty = 10;
-          config.legend.forEach((leg) => {
+          var lasty = 10;
+          config.legend.forEach(function (leg) {
               // subtitle
               if (leg.title) {
                   lasty += 30;
@@ -4400,13 +4403,13 @@ var App = (function (exports) {
                       .attr("x", 7)
                       .attr("y", lasty)
                       .attr("text-anchor", "start")
-                      .text((d) => leg.title);
+                      .text(function (d) { return leg.title; });
               }
-              leg.color.forEach((item, m) => {
+              leg.color.forEach(function (item, m) {
                   lasty += 17;
-                  const g = legend.append("g")
+                  var g = legend.append("g")
                       .attr("class", "contents")
-                      .style("transform", `translate(10px, ${lasty}px)`);
+                      .style("transform", "translate(10px, " + lasty + "px)");
                   g.append("circle")
                       .style("fill", item)
                       .attr("r", 7)
@@ -4422,10 +4425,10 @@ var App = (function (exports) {
           function closeHandler() {
               hide();
           }
-          legend.attr("transform", (d) => `translate(${[x, y]})`);
+          legend.attr("transform", function (d) { return "translate(" + [x, y] + ")"; });
       }
-      legShowHide.addEventListener("input", () => legShowHide.checked ? show() : hide());
-      window.addEventListener("show-legend", () => { if (!legShowHide.checked) {
+      legShowHide.addEventListener("input", function () { return legShowHide.checked ? show() : hide(); });
+      window.addEventListener("show-legend", function () { if (!legShowHide.checked) {
           return;
       } show(); });
   }
@@ -4434,15 +4437,15 @@ var App = (function (exports) {
   * @param config
   */
   function initSankeyNodeMovement(config) {
-      const x = document.getElementById("MoveX");
-      const y = document.getElementById("MoveY");
+      var x = document.getElementById("MoveX");
+      var y = document.getElementById("MoveY");
       config.filters.move.x = true;
       config.filters.move.y = true;
-      x.addEventListener("input", () => {
+      x.addEventListener("input", function () {
           config.filters.move.x = x.checked;
           window.dispatchEvent(new CustomEvent("soft-filter-action"));
       });
-      y.addEventListener("input", () => {
+      y.addEventListener("input", function () {
           config.filters.move.y = y.checked;
           window.dispatchEvent(new CustomEvent("soft-filter-action"));
       });
@@ -4452,8 +4455,8 @@ var App = (function (exports) {
    * @param config
    */
   function initSankeyNodeOrientation(config) {
-      const ltr = document.getElementById("OrientLTR");
-      const ttb = document.getElementById("OrientTTB");
+      var ltr = document.getElementById("OrientLTR");
+      var ttb = document.getElementById("OrientTTB");
       config.filters.orientation.ltr = ltr.checked;
       config.filters.orientation.ttb = ttb.checked;
       ltr.addEventListener("click", handleClick);
@@ -4490,6 +4493,42 @@ var App = (function (exports) {
       });
   }
 
+  function __generator(thisArg, body) {
+      var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+      return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+      function verb(n) { return function (v) { return step([n, v]); }; }
+      function step(op) {
+          if (f) throw new TypeError("Generator is already executing.");
+          while (_) try {
+              if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+              if (y = 0, t) op = [op[0] & 2, t.value];
+              switch (op[0]) {
+                  case 0: case 1: t = op; break;
+                  case 4: _.label++; return { value: op[1], done: false };
+                  case 5: _.label++; y = op[1]; op = [0]; continue;
+                  case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                  default:
+                      if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                      if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                      if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                      if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                      if (t[2]) _.ops.pop();
+                      _.trys.pop(); continue;
+              }
+              op = body.call(thisArg, _);
+          } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+          if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+      }
+  }
+
+  function __spreadArrays() {
+      for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+      for (var r = Array(s), k = 0, i = 0; i < il; i++)
+          for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+              r[k] = a[j];
+      return r;
+  }
+
   /**
    * returns short date format based on data key "daymonth" e.g. "0102" being 1st Feb
    * @param day
@@ -4499,21 +4538,21 @@ var App = (function (exports) {
    * @param s
    */
   function getMonthYear(s) {
-      const today = new Date(parseInt(s.substr(0, 4)), parseInt(s.substr(4, 2)) - 1, 1);
+      var today = new Date(parseInt(s.substr(0, 4)), parseInt(s.substr(4, 2)) - 1, 1);
       return today.toLocaleDateString("en-GB", { year: "numeric", month: "short" });
   }
 
-  const day = document.getElementById("Day");
-  const label = document.getElementById("lblDay");
+  var day = document.getElementById("Day");
+  var label = document.getElementById("lblDay");
   /**
    * @param config
    */
   function initDayList(config) {
-      day.addEventListener("change", e => {
-          const raw = config.filters.days[parseInt(day.value)];
-          const fdate = getMonthYear(raw);
+      day.addEventListener("change", function (e) {
+          var raw = config.filters.days[parseInt(day.value)];
+          var fdate = getMonthYear(raw);
           window.dispatchEvent(new CustomEvent("day-selected", { detail: fdate }));
-          label.textContent = `Day: ${fdate}`;
+          label.textContent = "Day: " + fdate;
           window.dispatchEvent(new CustomEvent("filter-action"));
       });
   }
@@ -4523,11 +4562,11 @@ var App = (function (exports) {
   function updateDayList(config) {
       setQueryHash(config);
       day.max = config.filters.days.length - 1 + "";
-      const i = config.filters.days.findIndex((e) => e === config.querystring.day);
+      var i = config.filters.days.findIndex(function (e) { return e === config.querystring.day; });
       day.value = (i > -1 ? i : 0) + "";
-      const raw = config.filters.days[parseInt(day.value)];
-      const fdate = getMonthYear(raw);
-      label.textContent = `Day: ${fdate}`;
+      var raw = config.filters.days[parseInt(day.value)];
+      var fdate = getMonthYear(raw);
+      label.textContent = "Day: " + fdate;
       window.dispatchEvent(new CustomEvent("day-selected", { detail: fdate }));
   }
 
@@ -4535,26 +4574,36 @@ var App = (function (exports) {
    * @param config
    */
   function fetchDataStore(config) {
-      return __awaiter(this, void 0, void 0, function* () {
-          const p = (file) => {
-              return new Promise((resolve, reject) => {
-                  // @ts-ignore
-                  JSZipUtils.getBinaryContent(file, (err, rawdata) => {
-                      if (err) {
-                          reject(err);
-                      }
-                      resolve(rawdata);
+      return __awaiter(this, void 0, void 0, function () {
+          var p;
+          var _this = this;
+          return __generator(this, function (_a) {
+              p = function (file) {
+                  return new Promise(function (resolve, reject) {
+                      // @ts-ignore
+                      JSZipUtils.getBinaryContent(file, function (err, rawdata) {
+                          if (err) {
+                              reject(err);
+                          }
+                          resolve(rawdata);
+                      });
                   });
-              });
-          };
-          return p(config.db.path + config.db.file)
-              .then((raw) => __awaiter(this, void 0, void 0, function* () {
-              // @ts-ignore
-              return yield JSZip.loadAsync(raw);
-          }))
-              .then((zipfile) => {
-              config.db.zip = zipfile;
-              return zipfile;
+              };
+              return [2 /*return*/, p(config.db.path + config.db.file)
+                      .then(function (raw) { return __awaiter(_this, void 0, void 0, function () {
+                      return __generator(this, function (_a) {
+                          switch (_a.label) {
+                              case 0: return [4 /*yield*/, JSZip.loadAsync(raw)];
+                              case 1: 
+                              // @ts-ignore
+                              return [2 /*return*/, _a.sent()];
+                          }
+                      });
+                  }); })
+                      .then(function (zipfile) {
+                      config.db.zip = zipfile;
+                      return zipfile;
+                  })];
           });
       });
   }
@@ -4562,8 +4611,10 @@ var App = (function (exports) {
    * @param config
    */
   function openDataFile(config) {
-      return __awaiter(this, void 0, void 0, function* () {
-          return config.db.zip.file(config.db.file).async("string");
+      return __awaiter(this, void 0, void 0, function () {
+          return __generator(this, function (_a) {
+              return [2 /*return*/, config.db.zip.file(config.db.file).async("string")];
+          });
       });
   }
   /**
@@ -4573,12 +4624,12 @@ var App = (function (exports) {
   function processDayFile(data, config) {
       config.db.dq = JSON.parse(data);
       config.filters.days = [];
-      for (let key in config.db.dq.interpolated) {
+      for (var key in config.db.dq.interpolated) {
           config.filters.days.push(key);
       }
-      config.filters.days.sort((a, b) => {
-          const pa = right(a, 2) + left(a, 2);
-          const pb = right(b, 2) + left(b, 2);
+      config.filters.days.sort(function (a, b) {
+          var pa = right(a, 2) + left(a, 2);
+          var pb = right(b, 2) + left(b, 2);
           return pa > pb ? 1 : -1;
       });
       updateDayList(config);
@@ -4591,15 +4642,15 @@ var App = (function (exports) {
    * @param config
    */
   function initMenu(config) {
-      const menu = document.querySelector(".menu");
-      const menuButton = document.querySelector(".menu-button");
+      var menu = document.querySelector(".menu");
+      var menuButton = document.querySelector(".menu-button");
       if (menu && menuButton) {
-          menuButton.addEventListener("click", e => {
+          menuButton.addEventListener("click", function (e) {
               e.stopImmediatePropagation();
               menu.classList.toggle("ready");
               window.dispatchEvent(new CustomEvent("hide-breakdown"));
           });
-          menu.addEventListener("click", e => e.stopImmediatePropagation());
+          menu.addEventListener("click", function (e) { return e.stopImmediatePropagation(); });
       }
       initDayList(config);
       initCallList(config);
@@ -4608,23 +4659,23 @@ var App = (function (exports) {
       initSankeyNodeMovement(config);
       initSankeyNodeOrientation(config);
       initUIThemes(config);
-      window.addEventListener("hide-menu", () => menu.classList.add("ready"));
-      window.addEventListener("filter-action", () => {
+      window.addEventListener("hide-menu", function () { return menu.classList.add("ready"); });
+      window.addEventListener("filter-action", function () {
           window.dispatchEvent(new CustomEvent("data-quality"));
           setQueryHash(config);
           config.db.file = "Legend" + config.querystring.organisation + config.querystring.day + config.querystring.call + ".json";
           openDataFile(config)
-              .then((content) => {
+              .then(function (content) {
               config.legend = [JSON.parse(content)];
               config.db.file = config.querystring.organisation + config.querystring.day + config.querystring.call + ".json";
               openDataFile(config)
-                  .then((content) => {
+                  .then(function (content) {
                   config.db.sankey = JSON.parse(content);
                   window.dispatchEvent(new CustomEvent("sankey-chart"));
               });
           });
       });
-      window.addEventListener("soft-filter-action", () => {
+      window.addEventListener("soft-filter-action", function () {
           config.sankey.nodeMoveX = config.filters.move.x;
           config.sankey.nodeMoveY = config.filters.move.y;
       });
@@ -6423,7 +6474,7 @@ var App = (function (exports) {
    * @returns - DOMRect
    */
   function measure(container) {
-      let result = container.getBoundingClientRect();
+      let result = JSON.parse(JSON.stringify(container.getBoundingClientRect()));
       const s = window.getComputedStyle(container);
       let ph = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom);
       let pw = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
@@ -6475,6 +6526,12 @@ var App = (function (exports) {
       svg.setAttributeNS(null, "viewBox", `0 0 ${options.width} ${options.height}`);
       svg.setAttributeNS(null, "preserveAspectRatio", "xMinYMin meet");
       svg.setAttributeNS(NS.xmlns, "xmlns", NS.svg);
+      if (options.id) {
+          svg.setAttributeNS(null, "id", options.id);
+      }
+      if (options.class) {
+          svg.setAttributeNS(null, "class", options.class);
+      }
       container.appendChild(svg);
       const defs = document.createElementNS(NS.svg, "defs");
       svg.appendChild(defs);
@@ -6486,72 +6543,72 @@ var App = (function (exports) {
   }
 
   function drawColumnChart(node, data) {
-      const s = new Slicer(data.map(d => d.label));
-      const total = Math.round(sum(data, (d) => d.value));
-      const fp = total === 1
+      var s = new Slicer(data.map(function (d) { return d.label; }));
+      var total = Math.round(sum(data, function (d) { return d.value; }));
+      var fp = total === 1
           ? new Intl.NumberFormat("en-GB", { style: "percent" })
           : new Intl.NumberFormat("en-GB", { style: "decimal" });
-      const margin = { top: 10, right: 10, bottom: 30, left: 20 };
-      const width = node.clientWidth;
-      const rw = width - margin.left - margin.right;
-      const height = node.clientHeight;
-      const rh = height - margin.top - margin.bottom;
-      const x = band().range([0, rw]).padding(0.1);
-      const y = linear$1().range([rh, 0]);
-      const sg = select(svg(node, { height: height, margin: margin, width: width }));
-      const canvas = sg.select(".canvas");
+      var margin = { top: 10, right: 10, bottom: 30, left: 20 };
+      var width = node.clientWidth;
+      var rw = width - margin.left - margin.right;
+      var height = node.clientHeight;
+      var rh = height - margin.top - margin.bottom;
+      var x = band().range([0, rw]).padding(0.1);
+      var y = linear$1().range([rh, 0]);
+      var sg = select(svg(node, { height: height, margin: margin, width: width }));
+      var canvas = sg.select(".canvas");
       sg.on("click", canvasClickHandler);
-      x.domain(data.map((d) => d.label));
-      y.domain([0, max(data, (d) => d.value) * 1.1]);
-      const xAxis = axisBottom(x)
-          .tickValues(x.domain().filter((d, i) => data.length < 10 ? true : !(i % 3) || i === data.length - 1));
-      const gAxis = canvas.append("g")
+      x.domain(data.map(function (d) { return d.label; }));
+      y.domain([0, max(data, function (d) { return d.value; }) * 1.1]);
+      var xAxis = axisBottom(x)
+          .tickValues(x.domain().filter(function (d, i) { return data.length < 10 ? true : !(i % 3) || i === data.length - 1; }));
+      var gAxis = canvas.append("g")
           .attr("class", "x axis")
-          .attr("transform", `translate(0,${rh})`)
+          .attr("transform", "translate(0," + rh + ")")
           .call(xAxis);
-      const ticks = gAxis.selectAll(".tick");
-      const text = ticks.selectAll("text");
+      var ticks = gAxis.selectAll(".tick");
+      var text = ticks.selectAll("text");
       text.each(function () {
-          const t = select(this);
-          const w = this.getBBox().width;
+          var t = select(this);
+          var w = this.getBBox().width;
           if (w > x.bandwidth()) {
-              const parent = select(this.parentNode);
-              parent.style("cursor", "pointer")
+              var parent_1 = select(this.parentNode);
+              parent_1.style("cursor", "pointer")
                   .on("click", function () {
-                  const tick = select(this);
+                  var tick = select(this);
                   tick.style("cursor", null);
                   tick.select("text")
-                      .text((d) => d);
+                      .text(function (d) { return d; });
                   tick.on("click", null);
-                  tick.select("title").text((d) => d);
+                  tick.select("title").text(function (d) { return d; });
               });
-              parent.append("title")
-                  .text((d) => `${d}\nClick to expand the text on this label`);
-              t.text((d) => d.substring(0, Math.ceil(x.bandwidth() / 8)) + " ...");
+              parent_1.append("title")
+                  .text(function (d) { return d + "\nClick to expand the text on this label"; });
+              t.text(function (d) { return d.substring(0, Math.ceil(x.bandwidth() / 8)) + " ..."; });
           }
       });
-      const gbar = canvas.selectAll(".bar")
+      var gbar = canvas.selectAll(".bar")
           .data(data).enter()
           .append("g")
-          .attr("transform", (d) => `translate(${x(d.label)},${y(d.value)})`);
+          .attr("transform", function (d) { return "translate(" + x(d.label) + "," + y(d.value) + ")"; });
       // @ts-ignore
-      gbar.each((d, i, n) => n[i].addEventListener("click", (e) => {
+      gbar.each(function (d, i, n) { return n[i].addEventListener("click", function (e) {
           barClickHandler(d, e);
-      }));
-      const rbar = gbar.append("rect")
+      }); });
+      var rbar = gbar.append("rect")
           .attr("class", "bar")
-          .attr("fill", (d) => d.color ? d.color : "steelblue")
+          .attr("fill", function (d) { return d.color ? d.color : "steelblue"; })
           .attr("x", 0)
           .attr("width", x.bandwidth())
           .attr("y", 0)
-          .attr("height", (d) => rh - y(d.value));
+          .attr("height", function (d) { return rh - y(d.value); });
       rbar.append("title")
-          .text((d) => `${d.label}: ${fp.format(d.value)} calls`);
+          .text(function (d) { return d.label + ": " + fp.format(d.value) + " calls"; });
       gbar.append("text")
           .classed("bar", true)
           .attr("x", x.bandwidth() / 2)
           .attr("y", -2)
-          .text((d) => `${fp.format(d.value)}`);
+          .text(function (d) { return "" + fp.format(d.value); });
       function barClickHandler(d, event) {
           event.stopImmediatePropagation();
           if (event.ctrlKey) {
@@ -6571,50 +6628,50 @@ var App = (function (exports) {
       }
       function highlight() {
           gbar.each(function (d) {
-              const filtered = s.isFiltered(d.label);
+              var filtered = s.isFiltered(d.label);
               return select(this).classed("filtered", filtered);
           });
       }
   }
 
   function drawDataTable(node, data) {
-      let html = `<div class="table-scroll"><table>`;
-      html += `<thead><tr><th scope="col"></th>`;
-      html += `<th scope="col" class="column-sort" title="Click to sort on this column">Category</th>`;
-      html += `<th scope="col" class="column-sort" title="Click to sort on this column">Value</th>`;
-      html += `</tr></thead>`;
-      html += `<tbody>`;
-      data.forEach((d) => {
-          html += `<tr>`;
-          html += `<td class="mark" style="background-color:${d.color};"></td>`;
-          html += `<td>${d.label ? d.label : "No description"}</td><td>${d.value}</td>`;
-          html += `</tr>`;
+      var html = "<div class=\"table-scroll\"><table>";
+      html += "<thead><tr><th scope=\"col\"></th>";
+      html += "<th scope=\"col\" class=\"column-sort\" title=\"Click to sort on this column\">Category</th>";
+      html += "<th scope=\"col\" class=\"column-sort\" title=\"Click to sort on this column\">Value</th>";
+      html += "</tr></thead>";
+      html += "<tbody>";
+      data.forEach(function (d) {
+          html += "<tr>";
+          html += "<td class=\"mark\" style=\"background-color:" + d.color + ";\"></td>";
+          html += "<td>" + (d.label ? d.label : "No description") + "</td><td>" + d.value + "</td>";
+          html += "</tr>";
       });
-      html += `</tbody></table></div>`;
+      html += "</tbody></table></div>";
       node.innerHTML = html;
       addSorting(node);
   }
   function addSorting(node) {
-      const isDate = (d) => { try {
+      var isDate = function (d) { try {
           return !isNaN((new Date(d)).getTime());
       }
       catch (_a) { } return false; };
-      const table = node.querySelector("table");
-      const columns = [].slice.call(table.querySelectorAll("th"));
-      columns.forEach((col, i) => {
+      var table = node.querySelector("table");
+      var columns = [].slice.call(table.querySelectorAll("th"));
+      columns.forEach(function (col, i) {
           if (col.classList.contains("column-sort")) {
-              col.addEventListener("click", (e) => {
-                  const el = e.target;
-                  let cl = el.classList.contains("asc") ? "desc" : "asc";
-                  columns.forEach((c) => c.classList.remove("asc", "desc"));
+              col.addEventListener("click", function (e) {
+                  var el = e.target;
+                  var cl = el.classList.contains("asc") ? "desc" : "asc";
+                  columns.forEach(function (c) { return c.classList.remove("asc", "desc"); });
                   el.classList.add(cl);
-                  const cellIndex = el.cellIndex;
-                  const rows = [].slice.call(table.tBodies[0].rows);
-                  rows.sort((a, b) => {
-                      let index;
-                      let cellA = a.cells[cellIndex];
-                      let cellB = b.cells[cellIndex];
-                      let testA, testB;
+                  var cellIndex = el.cellIndex;
+                  var rows = [].slice.call(table.tBodies[0].rows);
+                  rows.sort(function (a, b) {
+                      var index;
+                      var cellA = a.cells[cellIndex];
+                      var cellB = b.cells[cellIndex];
+                      var testA, testB;
                       if (!isNaN(cellA.textContent || "") && !isNaN(cellB.textContent || "")) {
                           testA = +(cellA.textContent || 0);
                           testB = +(cellB.textContent || 0);
@@ -6635,7 +6692,7 @@ var App = (function (exports) {
                       }
                       return index;
                   });
-                  rows.forEach((row) => {
+                  rows.forEach(function (row) {
                       var _a;
                       (_a = row.parentNode) === null || _a === void 0 ? void 0 : _a.removeChild(row);
                       table.tBodies[0].appendChild(row);
@@ -6649,12 +6706,12 @@ var App = (function (exports) {
    * @param config
    */
   function initBreakdown(config) {
-      const container = document.querySelector(".breakdown");
-      const action = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-action");
-      const message = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-message");
-      const chart = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-chart");
-      const close = document.querySelector(".breakdown-close");
-      let current = 0;
+      var container = document.querySelector(".breakdown");
+      var action = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-action");
+      var message = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-message");
+      var chart = container === null || container === void 0 ? void 0 : container.querySelector(".breakdown-chart");
+      var close = document.querySelector(".breakdown-close");
+      var current = 0;
       function clear() {
           if (message) {
               message.innerHTML = "";
@@ -6666,7 +6723,7 @@ var App = (function (exports) {
       }
       function hide() {
           container === null || container === void 0 ? void 0 : container.classList.add("ready");
-          setTimeout(() => clear(), 500);
+          setTimeout(function () { return clear(); }, 500);
       }
       function switchChartHandler() {
           current = (++current === config.breakdown.chart.length) ? 0 : current;
@@ -6678,11 +6735,11 @@ var App = (function (exports) {
           }
           message.innerHTML = config.breakdown.message;
           if (config.breakdown.chart.length > 1) {
-              message.innerHTML += `<div>Displaying chart ${current + 1} of ${config.breakdown.chart.length}</div>`;
-              message.innerHTML += `<h2>${config.breakdown.display[current][1]}</h2>`;
-              message.innerHTML += `<div class="switch-chart">Switch to the next</div>`;
-              const action = document.querySelector(".switch-chart");
-              action.addEventListener("click", switchChartHandler);
+              message.innerHTML += "<div>Displaying chart " + (current + 1) + " of " + config.breakdown.chart.length + "</div>";
+              message.innerHTML += "<h2>" + config.breakdown.display[current][1] + "</h2>";
+              message.innerHTML += "<div class=\"switch-chart\">Switch to the next</div>";
+              var action_1 = document.querySelector(".switch-chart");
+              action_1.addEventListener("click", switchChartHandler);
           }
           chart.innerHTML = "";
           if (config.breakdown.chart.length === 0) {
@@ -6694,8 +6751,8 @@ var App = (function (exports) {
           action.style.display = (config.breakdown.chart.length === 0) ? "none" : "";
           if (chart && config.breakdown.chart.length > 0) {
               if (config.breakdown.chart[0].length === 1) {
-                  const d = config.breakdown.chart[current][0];
-                  chart.innerHTML = `<div><h2>${d.label}</h2><h2>${d.value} call(s) 100%</h2></div>`;
+                  var d = config.breakdown.chart[current][0];
+                  chart.innerHTML = "<div><h2>" + d.label + "</h2><h2>" + d.value + " call(s) 100%</h2></div>";
               }
               else {
                   chart.innerHTML = " ";
@@ -6720,11 +6777,11 @@ var App = (function (exports) {
           container === null || container === void 0 ? void 0 : container.classList.remove("ready");
           window.dispatchEvent(new CustomEvent("hide-menu"));
       }
-      close.addEventListener("click", (e) => { e.stopImmediatePropagation(); hide(); });
-      container === null || container === void 0 ? void 0 : container.addEventListener("click", e => e.stopImmediatePropagation());
-      window.addEventListener("hide-breakdown", () => hide());
-      window.addEventListener("show-status", () => displayStatus(config));
-      window.addEventListener("show-breakdown", () => displayBreakdown(config));
+      close.addEventListener("click", function (e) { e.stopImmediatePropagation(); hide(); });
+      container === null || container === void 0 ? void 0 : container.addEventListener("click", function (e) { return e.stopImmediatePropagation(); });
+      window.addEventListener("hide-breakdown", function () { return hide(); });
+      window.addEventListener("show-status", function () { return displayStatus(config); });
+      window.addEventListener("show-breakdown", function () { return displayBreakdown(config); });
   }
 
   /**
@@ -6732,41 +6789,41 @@ var App = (function (exports) {
    * @param config
    */
   function initDataQualityChart(config) {
-      const container = document.getElementById("lblDQStatus");
-      const status = container.querySelector("img");
-      container.addEventListener("click", (e) => {
+      var container = document.getElementById("lblDQStatus");
+      var status = container.querySelector("img");
+      container.addEventListener("click", function (e) {
           e.stopImmediatePropagation();
           window.dispatchEvent(new CustomEvent("hide-menu"));
           window.dispatchEvent(new CustomEvent("show-status"));
       });
-      window.addEventListener("data-quality", () => {
-          const i = config.db.dq.interpolated[config.querystring.day];
-          const es = config.db.dq.estimated;
-          const ms = config.db.dq.missing;
-          let state = i.length + es.length + ms.length;
+      window.addEventListener("data-quality", function () {
+          var i = config.db.dq.interpolated[config.querystring.day];
+          var es = config.db.dq.estimated;
+          var ms = config.db.dq.missing;
+          var state = i.length + es.length + ms.length;
           status.src = state < 10 ? config.status.green.src : state < 15 ? config.status.amber.src : config.status.red.src;
           container.title = state < 10 ? config.status.green.title : state < 15 ? config.status.amber.title : config.status.red.title;
-          let qt = `<div class="data-quality">Data availability for <b>${getMonthYear(config.querystring.day)}</b>: `;
+          var qt = "<div class=\"data-quality\">Data availability for <b>" + getMonthYear(config.querystring.day) + "</b>: ";
           if (state === 0) {
-              qt += `Complete.<br>All data is available in the database.`;
+              qt += "Complete.<br>All data is available in the database.";
           }
           else if (state < 5) {
-              qt += `Very High`;
+              qt += "Very High";
           }
           else if (state < 10) {
-              qt += `High`;
+              qt += "High";
           }
           else if (state < 15) {
-              qt += `Medium`;
+              qt += "Medium";
           }
           else if (state < 20) {
-              qt += `Fair`;
+              qt += "Fair";
           }
           else {
-              qt += `Low`;
+              qt += "Low";
           }
           if (ms.length > 0) {
-              qt += `<br><br>Missing data: `;
+              qt += "<br><br>Missing data: ";
               qt += JSON.stringify(ms)
                   .replace(/\"/g, "")
                   .replace(/\,/g, ", ")
@@ -6774,7 +6831,7 @@ var App = (function (exports) {
                   .replace(/\]/g, "") + ".";
           }
           if (es.length > 0) {
-              qt += `<br>Estimated data: `;
+              qt += "<br>Estimated data: ";
               qt += JSON.stringify(es)
                   .replace(/\"/g, "")
                   .replace(/\,/g, ", ")
@@ -6782,14 +6839,14 @@ var App = (function (exports) {
                   .replace(/\]/g, "") + ".";
           }
           if (i.length > 0) {
-              qt += `<br>Interpolated data: `;
+              qt += "<br>Interpolated data: ";
               qt += JSON.stringify(i)
                   .replace(/\"/g, "")
                   .replace(/\,/g, ", ")
                   .replace(/\[/g, "")
                   .replace(/\]/g, "") + ".";
           }
-          qt += `</div>`;
+          qt += "</div>";
           config.status.message = qt;
       });
   }
@@ -11037,7 +11094,7 @@ var App = (function (exports) {
    * @returns - DOMRect
    */
   function measure$1(container) {
-      let result = container.getBoundingClientRect();
+      let result = JSON.parse(JSON.stringify(container.getBoundingClientRect()));
       const s = window.getComputedStyle(container);
       let ph = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom);
       let pw = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
@@ -11089,6 +11146,12 @@ var App = (function (exports) {
       svg.setAttributeNS(null, "viewBox", `0 0 ${options.width} ${options.height}`);
       svg.setAttributeNS(null, "preserveAspectRatio", "xMinYMin meet");
       svg.setAttributeNS(NS$1.xmlns, "xmlns", NS$1.svg);
+      if (options.id) {
+          svg.setAttributeNS(null, "id", options.id);
+      }
+      if (options.class) {
+          svg.setAttributeNS(null, "class", options.class);
+      }
       container.appendChild(svg);
       const defs = document.createElementNS(NS$1.svg, "defs");
       svg.appendChild(defs);
@@ -11099,8 +11162,8 @@ var App = (function (exports) {
       return svg;
   }
 
-  class Sankey {
-      constructor(options) {
+  var Sankey = /** @class */ (function () {
+      function Sankey(options) {
           this.container = document.querySelector("body");
           this.h = 200;
           this.links = [];
@@ -11117,11 +11180,12 @@ var App = (function (exports) {
           this.w = 200;
           this._extent = [0, 0]; // min/max node values
           this._fp = new Intl.NumberFormat("en-GB", { style: "decimal" });
-          this._linkGenerator = () => true;
+          this._id = "";
+          this._linkGenerator = function () { return true; };
           this._layerGap = 0;
           this._totalLayers = 0;
           if (options.margin !== undefined) {
-              let m = options.margin;
+              var m = options.margin;
               m.left = isNaN(m.left) ? 0 : m.left;
               m.right = isNaN(m.right) ? 0 : m.right;
               m.top = isNaN(m.top) ? 0 : m.top;
@@ -11130,7 +11194,7 @@ var App = (function (exports) {
           }
           if (options.container !== undefined) {
               this.container = options.container;
-              const box = measure$1(this.container);
+              var box = this.container.getBoundingClientRect();
               this.h = box.height;
               this.w = box.width;
               this.rh = this.h - this.margin.top - this.margin.bottom;
@@ -11160,41 +11224,41 @@ var App = (function (exports) {
       /**
        * Clears selection from Sankey
        */
-      clearSelection() {
+      Sankey.prototype.clearSelection = function () {
           selectAll(".selected").classed("selected", false);
           return this;
-      }
+      };
       /**
        * Saves data into Sankey
        * @param nodes - Sankey nodes
        * @param links - Sankey links
        */
-      data(nodes, links) {
+      Sankey.prototype.data = function (nodes, links) {
           this._initDataStructure(nodes, links);
           return this;
-      }
+      };
       /**
        * Removes this chart from the DOM
        */
-      destroy() {
+      Sankey.prototype.destroy = function () {
           select$1(this.container).select("svg").remove();
           return this;
-      }
+      };
       /**
        * draws the Sankey
        */
-      draw() {
+      Sankey.prototype.draw = function () {
           this._drawCanvas()
               ._drawNodes()
               ._drawLinks()
               ._drawLabels()
               ._drawPlayback();
           return this;
-      }
+      };
       /**
        * Recalculate internal values
        */
-      initialise() {
+      Sankey.prototype.initialise = function () {
           this._nodeValueLayer()
               ._scalingExtent()
               ._scaling()
@@ -11203,146 +11267,149 @@ var App = (function (exports) {
               ._positionNodeInLayer()
               ._positionLinks();
           return this;
-      }
+      };
       /**
        * Serialise the Sankey data
        */
-      toString() {
-          let nodes = this.nodes.map(n => `${n.name}: ${n.value} (L: ${n.layer})`).join("\n");
-          let links = this.links.map(l => `${l.nodeIn.name}->${l.nodeOut.name}`).join("\n");
-          return `nodes:\n${nodes}\n\nlinks:\n${links}`;
-      }
+      Sankey.prototype.toString = function () {
+          var nodes = this.nodes.map(function (n) { return n.name + ": " + n.value + " (L: " + n.layer + ")"; }).join("\n");
+          var links = this.links.map(function (l) { return l.nodeIn.name + "->" + l.nodeOut.name; }).join("\n");
+          return "nodes:\n" + nodes + "\n\nlinks:\n" + links;
+      };
       // ***** PRIVATE METHODS
-      _drawCanvas() {
-          const sg = svg$1(this.container, {
+      Sankey.prototype._drawCanvas = function () {
+          var _this = this;
+          this._id = "sankey" + Array.from(document.querySelectorAll(".sankey")).length;
+          var sg = svg$1(this.container, {
+              class: "sankey",
               height: this.h,
+              id: this._id,
               margin: this.margin,
               width: this.w
           });
-          sg.classList.add("sankey");
-          sg.id = "sankey" + Array.from(document.querySelectorAll(".sankey")).length;
-          const s = select$1(sg);
-          s.on("click", () => this.clearSelection());
-          const defs = s.select("defs");
-          const gb = defs.append("filter").attr("id", "blur");
+          var s = select$1(sg);
+          s.on("click", function () { return _this.clearSelection(); });
+          var defs = s.select("defs");
+          var gb = defs.append("filter").attr("id", "blur");
           gb.append("feGaussianBlur").attr("in", "SourceGraphic").attr("stdDeviation", 5);
           return this;
-      }
-      _drawLabels() {
-          const canvas = select$1(this.container).select(".canvas");
-          const nodes = canvas.selectAll("g.node");
-          const fade = this.playback ? " shadow" : "";
-          const outerLabel = nodes.append("text")
-              .attr("class", (d) => "node-label outer" + (d.layer > 0 ? fade : ""))
+      };
+      Sankey.prototype._drawLabels = function () {
+          var _this = this;
+          var canvas = select$1(this.container).select(".canvas");
+          var nodes = canvas.selectAll("g.node");
+          var fade = this.playback ? " shadow" : "";
+          var outerLabel = nodes.append("text")
+              .attr("class", function (d) { return "node-label outer" + (d.layer > 0 ? fade : ""); })
               .attr("dy", "0.35em")
               .attr("opacity", 0);
           if (this.orient === "horizontal") {
               outerLabel
-                  .attr("x", (d) => d.x < (this.rw / 2) ? this.nodeSize + 6 : -6)
-                  .attr("y", (d) => d.h / 2)
-                  .attr("text-anchor", (d) => d.x + this.nodeSize > this.rw / 2 ? "end" : "start")
-                  .style("opacity", (d) => d.h > 20 ? null : 0)
-                  .text((d) => d.name);
+                  .attr("x", function (d) { return d.x < (_this.rw / 2) ? _this.nodeSize + 6 : -6; })
+                  .attr("y", function (d) { return d.h / 2; })
+                  .attr("text-anchor", function (d) { return d.x + _this.nodeSize > _this.rw / 2 ? "end" : "start"; })
+                  .style("opacity", function (d) { return d.h > 20 ? null : 0; })
+                  .text(function (d) { return d.name; });
           }
           else {
               outerLabel
-                  .attr("x", (d) => d.w / 2)
-                  .attr("y", (d) => d.y < (this.rh / 2) ? this.nodeSize + 10 : -10)
+                  .attr("x", function (d) { return d.w / 2; })
+                  .attr("y", function (d) { return d.y < (_this.rh / 2) ? _this.nodeSize + 10 : -10; })
                   .attr("text-anchor", "middle")
-                  .text((d) => d.w > d.name.length * 7 ? d.name : "");
+                  .text(function (d) { return d.w > d.name.length * 7 ? d.name : ""; });
           }
-          const innerLabel = nodes.append("text")
-              .attr("class", (d) => "node-label inner" + (d.layer > 0 ? fade : ""))
+          var innerLabel = nodes.append("text")
+              .attr("class", function (d) { return "node-label inner" + (d.layer > 0 ? fade : ""); })
               .attr("dy", "0.35em")
               .attr("text-anchor", "middle")
               .attr("opacity", 0);
           if (this.orient === "horizontal") {
               innerLabel
-                  .attr("x", (d) => -d.h / 2)
-                  .attr("y", () => this.nodeSize / 2)
+                  .attr("x", function (d) { return -d.h / 2; })
+                  .attr("y", function () { return _this.nodeSize / 2; })
                   .attr("transform", "rotate(270)")
-                  .text((d) => d.h > 50 ? this._fp.format(d.value) : "");
+                  .text(function (d) { return d.h > 50 ? _this._fp.format(d.value) : ""; });
           }
           else {
               innerLabel
-                  .attr("x", (d) => d.w / 2)
-                  .attr("y", () => this.nodeSize / 2)
-                  .text((d) => d.w > 50 ? this._fp.format(d.value) : "");
+                  .attr("x", function (d) { return d.w / 2; })
+                  .attr("y", function () { return _this.nodeSize / 2; })
+                  .text(function (d) { return d.w > 50 ? _this._fp.format(d.value) : ""; });
           }
-          const t1 = transition$1().duration(600);
+          var t1 = transition$1().duration(600);
           if (this.orient === "horizontal") {
-              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
-              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.h > 50 ? 1 : 0);
+              outerLabel.transition(t1).delay(1000).style("opacity", function (d) { return d.h > 50 ? 1 : 0; });
+              innerLabel.transition(t1).delay(1000).style("opacity", function (d) { return d.h > 50 ? 1 : 0; });
           }
           else {
-              outerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
-              innerLabel.transition(t1).delay(1000).style("opacity", (d) => d.w > 50 ? 1 : 0);
+              outerLabel.transition(t1).delay(1000).style("opacity", function (d) { return d.w > 50 ? 1 : 0; });
+              innerLabel.transition(t1).delay(1000).style("opacity", function (d) { return d.w > 50 ? 1 : 0; });
           }
           return this;
-      }
-      _drawLinks() {
-          const svg = select$1(this.container).select("svg");
-          const id = svg.node().id;
-          const canvas = svg.select(".canvas");
-          const fade = this.playback ? " shadow" : "";
+      };
+      Sankey.prototype._drawLinks = function () {
+          var _this = this;
+          var svg = select$1(this.container).select("svg");
+          var canvas = svg.select(".canvas");
+          var fade = this.playback ? " shadow" : "";
           if (this.orient === "horizontal") {
               this._linkGenerator = linkHorizontal()
-                  .source((d) => [d.nodeIn.x + this.nodeSize, d.y0])
-                  .target((d) => [d.nodeOut.x, d.y1])
-                  .x((d) => d[0])
-                  .y((d) => d[1]);
+                  .source(function (d) { return [d.nodeIn.x + _this.nodeSize, d.y0]; })
+                  .target(function (d) { return [d.nodeOut.x, d.y1]; })
+                  .x(function (d) { return d[0]; })
+                  .y(function (d) { return d[1]; });
           }
           else {
               this._linkGenerator = linkVertical()
-                  .source((d) => [d.y0, d.nodeIn.y + this.nodeSize])
-                  .target((d) => [d.y1, d.nodeOut.y])
-                  .x((d) => d[0])
-                  .y((d) => d[1]);
+                  .source(function (d) { return [d.y0, d.nodeIn.y + _this.nodeSize]; })
+                  .target(function (d) { return [d.y1, d.nodeOut.y]; })
+                  .x(function (d) { return d[0]; })
+                  .y(function (d) { return d[1]; });
           }
-          const links = canvas.append("g")
+          var links = canvas.append("g")
               .attr("class", "links")
               .selectAll("g")
               .data(this.links).enter()
               .append("g")
-              .attr("id", d => `${id}_${d.id}`)
+              .attr("id", function (d) { return _this._id + "_" + d.id; })
               .attr("class", "link" + fade)
-              .on("click", (d) => this._linkClickHandler(event$1.target));
-          this.links.forEach((lk) => {
-              lk.dom = document.getElementById(`${id}_${lk.id}`);
+              .on("click", function (d) { return _this._linkClickHandler(event$1.target); });
+          this.links.forEach(function (lk) {
+              lk.dom = document.getElementById(_this._id + "_" + lk.id);
           });
           selectAll("g.links").lower();
-          const path = links
+          var path = links
               .append("path")
-              .attr("id", d => `${id}_p${d.id}`)
+              .attr("id", function (d) { return _this._id + "_p" + d.id; })
               .attr("class", "link")
-              .attr("stroke", (d) => d.fill ? d.fill : d.nodeIn.fill)
-              .attr("stroke-width", (d) => d.w)
+              .attr("stroke", function (d) { return d.fill ? d.fill : d.nodeIn.fill; })
+              .attr("stroke-width", function (d) { return d.w; })
               .attr("fill", "none");
           links.append("title")
-              .text((d) => `${d.nodeIn.name} -> ${d.nodeOut.name} - ${this._fp.format(d.value)}`);
-          const t = transition$1().duration(600);
+              .text(function (d) { return d.nodeIn.name + " -> " + d.nodeOut.name + " - " + _this._fp.format(d.value); });
+          var t = transition$1().duration(600);
           path.transition(t).delay(1000)
               // @ts-ignore
-              .attr("d", d => this._linkGenerator(d));
+              .attr("d", function (d) { return _this._linkGenerator(d); });
           return this;
-      }
-      _drawNodes() {
-          const self = this;
-          const svg = select$1(this.container).select("svg");
-          const id = svg.node().id;
-          const canvas = svg.select(".canvas");
-          const fade = this.playback ? " shadow" : "";
-          const nodes = canvas.append("g")
+      };
+      Sankey.prototype._drawNodes = function () {
+          var _this = this;
+          var self = this;
+          var svg = select$1(this.container).select("svg");
+          var canvas = svg.select(".canvas");
+          var fade = this.playback ? " shadow" : "";
+          var nodes = canvas.append("g")
               .attr("class", "nodes")
               .selectAll("g.node")
               .data(this.nodes).enter()
               .append("g")
-              .attr("id", (d) => `${id}_${d.id}`)
-              .attr("class", (d) => "node" + (d.layer > 0 ? fade : ""))
-              .attr("transform", (d) => {
-              return this.orient === "horizontal"
-                  ? `translate(${d.x},${-d.h})`
-                  : `translate(${-d.w},${d.y})`;
+              .attr("id", function (d) { return _this._id + "_" + d.id; })
+              .attr("class", function (d) { return "node" + (d.layer > 0 ? fade : ""); })
+              .attr("transform", function (d) {
+              return _this.orient === "horizontal"
+                  ? "translate(" + d.x + "," + -d.h + ")"
+                  : "translate(" + -d.w + "," + d.y + ")";
           })
               .call(
           // @ts-ignore
@@ -11350,33 +11417,33 @@ var App = (function (exports) {
               .on("start", dragstart)
               .on("drag", dragmove)
               .on("end", dragend))
-              .on("click", () => this._nodeClickHandler(event$1.currentTarget));
-          this.nodes.forEach((node) => {
-              node.dom = document.getElementById(`${id}_${node.id}`);
+              .on("click", function () { return _this._nodeClickHandler(event$1.currentTarget); });
+          this.nodes.forEach(function (node) {
+              node.dom = document.getElementById(_this._id + "_" + node.id);
           });
           select$1("g.nodes").raise();
-          const rect = nodes.append("rect")
-              .attr("id", (d) => `${id}_r${d.id}`)
+          var rect = nodes.append("rect")
+              .attr("id", function (d) { return _this._id + "_r" + d.id; })
               .attr("class", "node")
-              .attr("height", (d) => d.h + "px")
-              .attr("width", (d) => d.w + "px")
-              .attr("fill", (d) => d.fill)
+              .attr("height", function (d) { return d.h + "px"; })
+              .attr("width", function (d) { return d.w + "px"; })
+              .attr("fill", function (d) { return d.fill; })
               .attr("x", 0)
               .attr("y", 0)
               .style("opacity", 0);
           nodes.append("rect")
               .attr("class", "shadow node")
-              .attr("height", (d) => (this.playback ? d.h : 0) + "px")
-              .attr("width", (d) => (this.playback ? d.w : 0) + "px")
+              .attr("height", function (d) { return (_this.playback ? d.h : 0) + "px"; })
+              .attr("width", function (d) { return (_this.playback ? d.w : 0) + "px"; })
               .attr("x", 0)
               .attr("y", 0);
-          const t1 = transition$1().duration(600);
-          rect.transition(t1).delay((d) => d.layer * 100)
+          var t1 = transition$1().duration(600);
+          rect.transition(t1).delay(function (d) { return d.layer * 100; })
               .style("opacity", 1);
           nodes.transition(t1)
-              .attr("transform", (d) => `translate(${d.x} ${d.y})`);
+              .attr("transform", function (d) { return "translate(" + d.x + " " + d.y + ")"; });
           nodes.append("title")
-              .text((d) => `${d.name} - ${this._fp.format(d.value)}`);
+              .text(function (d) { return d.name + " - " + _this._fp.format(d.value); });
           function dragstart(d) {
               if (!d.__x) {
                   d.__x = event$1.x;
@@ -11394,8 +11461,8 @@ var App = (function (exports) {
           function dragmove(d) {
               select$1(this)
                   .attr("transform", function (d) {
-                  const dx = event$1.x - d.__x;
-                  const dy = event$1.y - d.__y;
+                  var dx = event$1.x - d.__x;
+                  var dy = event$1.y - d.__y;
                   // x direction
                   if (self.nodeMoveX) {
                       d.x = d.__x0 + dx;
@@ -11410,11 +11477,11 @@ var App = (function (exports) {
                           d.y = 0;
                       }
                   }
-                  return `translate(${d.x}, ${d.y})`;
+                  return "translate(" + d.x + ", " + d.y + ")";
               });
               self._positionLinks();
               selectAll("path.link")
-                  .attr("d", d => self._linkGenerator(d));
+                  .attr("d", function (d) { return self._linkGenerator(d); });
           }
           function dragend(d) {
               delete d.__x;
@@ -11425,31 +11492,33 @@ var App = (function (exports) {
               delete d.__y1;
           }
           return this;
-      }
-      _drawPlayback() {
+      };
+      Sankey.prototype._drawPlayback = function () {
+          var _this = this;
           if (this.playback) {
-              this.nodes.forEach((node) => {
+              this.nodes.forEach(function (node) {
                   if (node.story && node.linksOut.length > 0) {
-                      const c = select$1(node.dom).append("circle")
+                      var c = select$1(node.dom).append("circle")
                           .attr("class", "playback-prompt")
                           .attr("cx", node.w / 2)
                           .attr("cy", node.h / 2)
                           .attr("filter", "url(#blur)")
                           .attr("r", 0)
-                          .on("click", () => this._playbackClickHandler(event$1.currentTarget));
+                          .on("click", function () { return _this._playbackClickHandler(event$1.currentTarget); });
                       c.append("title").text("View notes about this flow stage");
                       c.transition().duration(3000).attr("r", 15);
                   }
               });
           }
           return this;
-      }
+      };
       /**
        * Creates the initial data structures
        */
-      _initDataStructure(nodes, links) {
-          nodes.forEach((node, i) => {
-              const n = node;
+      Sankey.prototype._initDataStructure = function (nodes, links) {
+          var _this = this;
+          nodes.forEach(function (node, i) {
+              var n = node;
               n.h = 0; // height
               n.id = i + 1;
               n.layer = -1; // denotes membership to a visual grouping
@@ -11458,65 +11527,66 @@ var App = (function (exports) {
               n.w = 0; // width
               n.x = 0; // position onscreen
               n.y = 0;
-              this.nodes.push(n);
+              _this.nodes.push(n);
           });
-          links.forEach((link, i) => {
-              const l = link;
-              l.nodeIn = this.nodes[link.source]; // replaces source in other sankey models
-              l.nodeOut = this.nodes[link.target]; // ditto target
+          links.forEach(function (link, i) {
+              var l = link;
+              l.nodeIn = _this.nodes[link.source]; // replaces source in other sankey models
+              l.nodeOut = _this.nodes[link.target]; // ditto target
               l.id = "L" + (i + 1);
               l.w = 0; // width
               l.y0 = 0; // value at source node (horizontal: top right y, vertical: bottom left x)
               l.y1 = 0; // value at target node (horizontal: bottom left y, vertical; top right x)
-              this.links.push(l);
-              this.links[i].nodeIn.linksOut.push(this.links[i]);
-              this.links[i].nodeOut.linksIn.push(this.links[i]);
+              _this.links.push(l);
+              _this.links[i].nodeIn.linksOut.push(_this.links[i]);
+              _this.links[i].nodeOut.linksIn.push(_this.links[i]);
           });
-      }
-      _linkClickHandler(el) {
+      };
+      Sankey.prototype._linkClickHandler = function (el) {
           event$1.stopPropagation();
           this.clearSelection();
           window.dispatchEvent(new CustomEvent("link-selected", { detail: el }));
           select$1(el).classed("selected", true);
-      }
-      _nodeClickHandler(el) {
+      };
+      Sankey.prototype._nodeClickHandler = function (el) {
           event$1.stopPropagation();
           this.clearSelection();
-          const activeNode = select$1(el);
-          const dt = activeNode.datum();
+          var activeNode = select$1(el);
+          var dt = activeNode.datum();
           window.dispatchEvent(new CustomEvent("node-selected", { detail: el }));
-          dt.linksIn.forEach((link) => {
+          dt.linksIn.forEach(function (link) {
               select$1(link.dom).select("path").classed("selected", true);
           });
-          dt.linksOut.forEach((link) => {
+          dt.linksOut.forEach(function (link) {
               select$1(link.dom).select("path").classed("selected", true);
           });
-      }
-      _playbackClickHandler(el) {
+      };
+      Sankey.prototype._playbackClickHandler = function (el) {
+          var _this = this;
           event$1.stopPropagation();
           this.clearSelection();
-          const button = select$1(el);
+          var button = select$1(el);
           button.transition().duration(1000)
               .attr("r", 0)
               .transition().duration(0)
               .remove();
-          const activeNode = select$1(el.parentNode);
-          const dt = activeNode.datum();
-          const narrate = [];
+          var activeNode = select$1(el.parentNode);
+          var dt = activeNode.datum();
+          var narrate = [];
           if (dt.story) {
               narrate.push(dt);
           }
           if (dt.linksOut.length > 0) {
-              dt.linksOut.forEach((link) => {
+              dt.linksOut.forEach(function (link) {
                   select$1(link.dom).classed("shadow", false);
                   if (link.story) {
                       narrate.push(link);
                   }
               });
-              this.nodes.forEach((node) => {
-                  let sum = 0, breakdown = false;
+              this.nodes.forEach(function (node) {
+                  var sum = 0, breakdown = false;
                   if (node.linksIn.length > 0 || node === dt) {
-                      node.linksIn.forEach((link) => {
+                      node.linksIn.forEach(function (link) {
                           if (select$1(link.dom).classed("shadow")) {
                               sum += link.value;
                           }
@@ -11525,17 +11595,17 @@ var App = (function (exports) {
                           }
                       });
                       if (breakdown || (node === dt && node.linksIn.length === 0)) {
-                          sum = this._scale(sum);
+                          sum = _this._scale(sum);
                           sum = sum >= 0 ? sum : 0;
-                          const shadow = select$1(node.dom).select(".shadow");
-                          if (this.orient === "horizontal") {
+                          var shadow = select$1(node.dom).select(".shadow");
+                          if (_this.orient === "horizontal") {
                               shadow.transition().duration(500)
-                                  .attr("height", `${sum}px`);
+                                  .attr("height", sum + "px");
                           }
                           else {
-                              let x = parseFloat(select$1(node.dom).attr("x"));
+                              var x = parseFloat(select$1(node.dom).attr("x"));
                               shadow.transition().duration(500)
-                                  .attr("width", `${sum}px`)
+                                  .attr("width", sum + "px")
                                   .attr("x", x + sum);
                           }
                           if (sum === 0) {
@@ -11547,45 +11617,46 @@ var App = (function (exports) {
               });
           }
           window.dispatchEvent(new CustomEvent("node-playback", { detail: narrate }));
-      }
+      };
       /**
        * Sets height and width of node
        */
-      _nodeSize() {
-          this.nodes.forEach((node) => {
-              if (this.orient === "horizontal") {
-                  node.h = Math.max(1, this._scale(node.value));
-                  node.w = this.nodeSize;
+      Sankey.prototype._nodeSize = function () {
+          var _this = this;
+          this.nodes.forEach(function (node) {
+              if (_this.orient === "horizontal") {
+                  node.h = Math.max(1, _this._scale(node.value));
+                  node.w = _this.nodeSize;
               }
               else {
-                  node.h = this.nodeSize;
-                  node.w = Math.max(1, this._scale(node.value));
+                  node.h = _this.nodeSize;
+                  node.w = Math.max(1, _this._scale(node.value));
               }
           });
           return this;
-      }
+      };
       /**
        * Determines each node dimension and layer attribution and finally determines node order within layer
        */
-      _nodeValueLayer() {
-          const track = new Map();
-          let max = 0;
-          this.nodes.forEach((node) => {
+      Sankey.prototype._nodeValueLayer = function () {
+          var track = new Map();
+          var max = 0;
+          this.nodes.forEach(function (node) {
               // calculate value if not already provided
               if (node.value === undefined) {
-                  node.value = Math.max(1, node.linksIn.map(link => link.value).reduce((ac, s) => ac + s, 0), node.linksOut.map(link => link.value).reduce((ac, s) => ac + s, 0));
+                  node.value = Math.max(1, node.linksIn.map(function (link) { return link.value; }).reduce(function (ac, s) { return ac + s; }, 0), node.linksOut.map(function (link) { return link.value; }).reduce(function (ac, s) { return ac + s; }, 0));
               }
               // calculate layer value
               if (node.linksIn.length === 0) {
                   node.layer = 0;
                   track.set(node.id, []);
               }
-              node.linksOut.forEach((link) => {
+              node.linksOut.forEach(function (link) {
                   if (track.has(link.nodeOut.id)) {
-                      const parent = track.get(node.id);
-                      if (parent.findIndex((e) => e === link.nodeOut.id) === -1) {
+                      var parent_1 = track.get(node.id);
+                      if (parent_1.findIndex(function (e) { return e === link.nodeOut.id; }) === -1) {
                           link.nodeOut.layer = node.layer + 1;
-                          const a = track.get(link.nodeOut.id);
+                          var a = track.get(link.nodeOut.id);
                           a.push(node.id);
                           track.set(link.nodeOut.id, a);
                       }
@@ -11600,25 +11671,26 @@ var App = (function (exports) {
           this._totalLayers = max;
           this._layerGap = (this.orient === "horizontal" ? this.rw : this.rh) / this._totalLayers;
           // sort: by layer asc then by size then by a-z name
-          this.nodes.sort((a, b) => a.layer - b.layer || b.value - a.value || (b.name > a.name ? -1 : 1));
+          this.nodes.sort(function (a, b) { return a.layer - b.layer || b.value - a.value || (b.name > a.name ? -1 : 1); });
           return this;
-      }
+      };
       /**
        * Positions links relative to sourcec and destination nodes
        */
-      _positionLinks() {
+      Sankey.prototype._positionLinks = function () {
+          var _this = this;
           // sort: by size then by a-z name
-          this.links.sort((a, b) => b.value - a.value || (b.nodeIn.name > a.nodeIn.name ? -1 : 1));
-          const source = new Map();
-          const target = new Map();
-          this.links.forEach((link) => {
-              let src = 0, tgt = 0;
-              link.w = Math.max(1, this._scale(link.value));
+          this.links.sort(function (a, b) { return b.value - a.value || (b.nodeIn.name > a.nodeIn.name ? -1 : 1); });
+          var source = new Map();
+          var target = new Map();
+          this.links.forEach(function (link) {
+              var src = 0, tgt = 0;
+              link.w = Math.max(1, _this._scale(link.value));
               if (!source.has(link.nodeIn.id)) {
-                  source.set(link.nodeIn.id, (this.orient === "horizontal") ? link.nodeIn.y : link.nodeIn.x);
+                  source.set(link.nodeIn.id, (_this.orient === "horizontal") ? link.nodeIn.y : link.nodeIn.x);
               }
               if (!target.has(link.nodeOut.id)) {
-                  target.set(link.nodeOut.id, (this.orient === "horizontal") ? link.nodeOut.y : link.nodeOut.x);
+                  target.set(link.nodeOut.id, (_this.orient === "horizontal") ? link.nodeOut.y : link.nodeOut.x);
               }
               src = source.get(link.nodeIn.id);
               link.y0 = src + (link.w / 2);
@@ -11628,16 +11700,17 @@ var App = (function (exports) {
               target.set(link.nodeOut.id, link.y1 + (link.w / 2));
           });
           return this;
-      }
+      };
       /**
        * spreads the nodes across the chart space by layer
        */
-      _positionNodeByLayer() {
+      Sankey.prototype._positionNodeByLayer = function () {
+          var _this = this;
           if (this.orient === "horizontal") {
-              this.nodes.forEach((node) => {
-                  node.x = node.layer * this._layerGap;
-                  if (node.x >= this.rw) {
-                      node.x -= this.nodeSize;
+              this.nodes.forEach(function (node) {
+                  node.x = node.layer * _this._layerGap;
+                  if (node.x >= _this.rw) {
+                      node.x -= _this.nodeSize;
                   }
                   else if (node.x < 0) {
                       node.x = 0;
@@ -11645,10 +11718,10 @@ var App = (function (exports) {
               });
           }
           else {
-              this.nodes.forEach((node) => {
-                  node.y = node.layer * this._layerGap;
-                  if (node.y >= this.rh) {
-                      node.y -= this.nodeSize;
+              this.nodes.forEach(function (node) {
+                  node.y = node.layer * _this._layerGap;
+                  if (node.y >= _this.rh) {
+                      node.y -= _this.nodeSize;
                   }
                   else if (node.y < 0) {
                       node.y = 0;
@@ -11656,76 +11729,77 @@ var App = (function (exports) {
               });
           }
           return this;
-      }
+      };
       /**
        * spreads the nodes within layer
        */
-      _positionNodeInLayer() {
-          let layer = -1, n = 0;
-          let layerTracker = [];
+      Sankey.prototype._positionNodeInLayer = function () {
+          var _this = this;
+          var layer = -1, n = 0;
+          var layerTracker = [];
           if (this.orient === "horizontal") {
-              this.nodes.forEach((node) => {
+              this.nodes.forEach(function (node) {
                   if (layer === node.layer) {
                       node.y = n;
-                      n += node.h + this.padding;
+                      n += node.h + _this.padding;
                       layerTracker[layer].sum = n;
                       layerTracker[layer].nodes.push(node);
                   }
                   else {
                       layer = node.layer;
                       node.y = 0;
-                      n = node.h + this.padding;
-                      layerTracker.push({ nodes: [node], sum: n, total: this.rh });
+                      n = node.h + _this.padding;
+                      layerTracker.push({ nodes: [node], sum: n, total: _this.rh });
                   }
               });
           }
           else {
-              this.nodes.forEach((node) => {
+              this.nodes.forEach(function (node) {
                   if (layer === node.layer) {
                       node.x = n;
-                      n += node.w + this.padding;
+                      n += node.w + _this.padding;
                       layerTracker[layer].sum = n;
                       layerTracker[layer].nodes.push(node);
                   }
                   else {
                       layer = node.layer;
                       node.x = 0;
-                      n = node.w + this.padding;
-                      layerTracker.push({ nodes: [node], sum: n, total: this.rw });
+                      n = node.w + _this.padding;
+                      layerTracker.push({ nodes: [node], sum: n, total: _this.rw });
                   }
               });
           }
           // 2nd pass to widen out layers too tightly clustered together
-          layerTracker.forEach(layer => {
+          layerTracker.forEach(function (layer) {
               if (layer.sum * 1.2 < layer.total && layer.nodes.length > 1) {
-                  const customPad = ((layer.total - layer.sum) * 0.75) / layer.nodes.length;
-                  layer.nodes.forEach((node, i) => {
-                      if (this.orient === "horizontal") {
-                          node.y += (i + 1) * customPad;
+                  var customPad_1 = ((layer.total - layer.sum) * 0.75) / layer.nodes.length;
+                  layer.nodes.forEach(function (node, i) {
+                      if (_this.orient === "horizontal") {
+                          node.y += (i + 1) * customPad_1;
                       }
                       else {
-                          node.x += (i + 1) * customPad;
+                          node.x += (i + 1) * customPad_1;
                       }
                   });
               }
           });
           return this;
-      }
+      };
       /**
        * Calculates the chart scale
        */
-      _scaling() {
-          const rng = [0, this.orient === "horizontal" ? this.rh : this.rw];
+      Sankey.prototype._scaling = function () {
+          var rng = [0, this.orient === "horizontal" ? this.rh : this.rw];
           this._scale = linear$1$1().domain(this._extent).range(rng);
           return this;
-      }
+      };
       /**
        * Determines the minimum and maximum extent values to scale nodes by
        */
-      _scalingExtent() {
-          this._extent[0] = this.nodes.reduce((ac, n) => (ac === undefined || n.value < ac) ? n.value : ac, 0);
-          let max = this._extent[0], layer = 0, runningTotal = 0;
-          this.nodes.forEach((node) => {
+      Sankey.prototype._scalingExtent = function () {
+          this._extent[0] = this.nodes.reduce(function (ac, n) { return (ac === undefined || n.value < ac) ? n.value : ac; }, 0);
+          var max = this._extent[0], layer = 0, runningTotal = 0;
+          this.nodes.forEach(function (node) {
               if (node.layer === layer) {
                   runningTotal += node.value;
               }
@@ -11737,8 +11811,9 @@ var App = (function (exports) {
           });
           this._extent[1] = (runningTotal > max ? runningTotal : max) + (this.padding * (this.nodes.length * 2.5));
           return this;
-      }
-  }
+      };
+      return Sankey;
+  }());
 
   function colors(specifier) {
     var n = specifier.length / 6 | 0, colors = new Array(n), i = 0;
@@ -11761,26 +11836,26 @@ var App = (function (exports) {
 
   var plasma = ramp(colors("0d088710078813078916078a19068c1b068d1d068e20068f2206902406912605912805922a05932c05942e05952f059631059733059735049837049938049a3a049a3c049b3e049c3f049c41049d43039e44039e46039f48039f4903a04b03a14c02a14e02a25002a25102a35302a35502a45601a45801a45901a55b01a55c01a65e01a66001a66100a76300a76400a76600a76700a86900a86a00a86c00a86e00a86f00a87100a87201a87401a87501a87701a87801a87a02a87b02a87d03a87e03a88004a88104a78305a78405a78606a68707a68808a68a09a58b0aa58d0ba58e0ca48f0da4910ea3920fa39410a29511a19613a19814a099159f9a169f9c179e9d189d9e199da01a9ca11b9ba21d9aa31e9aa51f99a62098a72197a82296aa2395ab2494ac2694ad2793ae2892b02991b12a90b22b8fb32c8eb42e8db52f8cb6308bb7318ab83289ba3388bb3488bc3587bd3786be3885bf3984c03a83c13b82c23c81c33d80c43e7fc5407ec6417dc7427cc8437bc9447aca457acb4679cc4778cc4977cd4a76ce4b75cf4c74d04d73d14e72d24f71d35171d45270d5536fd5546ed6556dd7566cd8576bd9586ada5a6ada5b69db5c68dc5d67dd5e66de5f65de6164df6263e06363e16462e26561e26660e3685fe4695ee56a5de56b5de66c5ce76e5be76f5ae87059e97158e97257ea7457eb7556eb7655ec7754ed7953ed7a52ee7b51ef7c51ef7e50f07f4ff0804ef1814df1834cf2844bf3854bf3874af48849f48948f58b47f58c46f68d45f68f44f79044f79143f79342f89441f89540f9973ff9983ef99a3efa9b3dfa9c3cfa9e3bfb9f3afba139fba238fca338fca537fca636fca835fca934fdab33fdac33fdae32fdaf31fdb130fdb22ffdb42ffdb52efeb72dfeb82cfeba2cfebb2bfebd2afebe2afec029fdc229fdc328fdc527fdc627fdc827fdca26fdcb26fccd25fcce25fcd025fcd225fbd324fbd524fbd724fad824fada24f9dc24f9dd25f8df25f8e125f7e225f7e425f6e626f6e826f5e926f5eb27f4ed27f3ee27f3f027f2f227f1f426f1f525f0f724f0f921"));
 
-  const color$2 = sequential(interpolateViridis).domain([0, 1]);
-  const chart = document.getElementById("chart");
-  const desc = (a, b) => a.value > b.value ? -1 : a.value < b.value ? 1 : 0;
-  const fp = new Intl.NumberFormat("en-GB", { style: "decimal" });
+  var color$2 = sequential(interpolateViridis).domain([0, 1]);
+  var chart = document.getElementById("chart");
+  var desc = function (a, b) { return a.value > b.value ? -1 : a.value < b.value ? 1 : 0; };
+  var fp = new Intl.NumberFormat("en-GB", { style: "decimal" });
   /**
    * @param config
    */
   function initSankeyChart(config) {
-      window.addEventListener("sankey-chart", () => loadSankeyChart(config));
-      window.addEventListener("clear-chart", () => { config.sankey.clearSelection(); });
-      window.addEventListener("node-selected", (el) => {
-          const g = select(el.detail);
-          const d = g.datum();
-          const sg = select(chart).select("svg");
-          let sumSource = [], sumTarget = [];
-          let text;
+      window.addEventListener("sankey-chart", function () { return loadSankeyChart(config); });
+      window.addEventListener("clear-chart", function () { config.sankey.clearSelection(); });
+      window.addEventListener("node-selected", function (el) {
+          var g = select(el.detail);
+          var d = g.datum();
+          var sg = select(chart).select("svg");
+          var sumSource = [], sumTarget = [];
+          var text;
           if (d.grouping) {
-              text = `<div>Breakdown for ${d.name}</div>`;
+              text = "<div>Breakdown for " + d.name + "</div>";
               config.breakdown.message = text;
-              d.grouping.map((e) => {
+              d.grouping.map(function (e) {
                   sumSource.push({
                       color: e.color,
                       label: e.label,
@@ -11789,47 +11864,47 @@ var App = (function (exports) {
               });
           }
           else {
-              const ns = [], nt = [];
+              var ns_1 = [], nt_1 = [];
               sg.selectAll(".link")
                   .each(function (link) {
                   if (link.nodeOut === d) {
-                      ns.push({
+                      ns_1.push({
                           color: "steelblue",
                           label: link.nodeIn.name,
                           value: link.value
                       });
                   }
                   else if (link.nodeIn === d) {
-                      nt.push({
+                      nt_1.push({
                           color: "steelblue",
                           label: link.nodeOut.name,
                           value: link.value
                       });
                   }
               });
-              let srcMax = 0;
-              rollup(ns.sort((a, b) => a.value - b.value), v => sum(v, d => d.value), d => d.label).forEach((v, k) => {
+              var srcMax_1 = 0;
+              rollup(ns_1.sort(function (a, b) { return a.value - b.value; }), function (v) { return sum(v, function (d) { return d.value; }); }, function (d) { return d.label; }).forEach(function (v, k) {
                   sumSource.push({ color: "", label: k, value: v });
-                  srcMax = Math.max(srcMax, v);
+                  srcMax_1 = Math.max(srcMax_1, v);
               });
-              let tgtMax = 0;
-              rollup(nt.sort((a, b) => a.value - b.value), v => sum(v, d => d.value), d => d.label).forEach((v, k) => {
+              var tgtMax_1 = 0;
+              rollup(nt_1.sort(function (a, b) { return a.value - b.value; }), function (v) { return sum(v, function (d) { return d.value; }); }, function (d) { return d.label; }).forEach(function (v, k) {
                   sumTarget.push({ color: "", label: k, value: v });
-                  tgtMax = Math.max(tgtMax, v);
+                  tgtMax_1 = Math.max(tgtMax_1, v);
               });
-              const src = sumSource.map((ns) => {
-                  ns.color = color$2(ns.value / srcMax);
+              var src = sumSource.map(function (ns) {
+                  ns.color = color$2(ns.value / srcMax_1);
                   return ns.value;
               })
-                  .reduce((ac, v) => ac + v, 0);
-              const tgt = sumTarget.map((ns) => {
-                  ns.color = color$2(ns.value / tgtMax);
+                  .reduce(function (ac, v) { return ac + v; }, 0);
+              var tgt = sumTarget.map(function (ns) {
+                  ns.color = color$2(ns.value / tgtMax_1);
                   return ns.value;
               })
-                  .reduce((ac, v) => ac + v, 0);
-              text = `<div>${d.name}</div><div>Incoming: ${fp.format(src)} calls</div>`;
-              text += `<div>Outgoing: ${fp.format(tgt)} calls</div>`;
-              text += `Out/In: ${(src === 0 || tgt === 0) ? "---" : fp.format(tgt / src)}`;
+                  .reduce(function (ac, v) { return ac + v; }, 0);
+              text = "<div>" + d.name + "</div><div>Incoming: " + fp.format(src) + " calls</div>";
+              text += "<div>Outgoing: " + fp.format(tgt) + " calls</div>";
+              text += "Out/In: " + ((src === 0 || tgt === 0) ? "---" : fp.format(tgt / src));
           }
           config.breakdown.message = text;
           config.breakdown.chart = [];
@@ -11844,12 +11919,12 @@ var App = (function (exports) {
           }
           window.dispatchEvent(new CustomEvent("show-breakdown"));
       });
-      window.addEventListener("link-selected", (el) => {
-          const g = select(el.detail);
-          const d = g.datum();
-          const sg = select(chart).select("svg");
-          let text = `<div>${d.nodeIn.name} → ${d.nodeOut.name} calls</div>`;
-          text += `<div>Outgoing: ${fp.format(d.value)} calls</div>`;
+      window.addEventListener("link-selected", function (el) {
+          var g = select(el.detail);
+          var d = g.datum();
+          var sg = select(chart).select("svg");
+          var text = "<div>" + d.nodeIn.name + " \u2192 " + d.nodeOut.name + " calls</div>";
+          text += "<div>Outgoing: " + fp.format(d.value) + " calls</div>";
           config.breakdown.message = text;
           config.breakdown.chart = [];
           config.breakdown.display = [];
@@ -11863,12 +11938,12 @@ var App = (function (exports) {
               config.breakdown.display.push(["table", "Dx codes"]);
           }
           if (d.supplySG && d.supplySG.length > 0) {
-              d.supplySG.forEach((d) => {
+              d.supplySG.forEach(function (d) {
                   if (d.label === undefined) {
-                      d.label = `Group code: ${d.Symptom_Group_Code}<br>`;
-                      d.label += `${d.Symptom_Group_Description}<br>`;
-                      d.label += `Discriminator: ${d.Symptom_Discriminator_Code}<br>`;
-                      d.label += `${d.Symptom_Descriminator_Description}`;
+                      d.label = "Group code: " + d.Symptom_Group_Code + "<br>";
+                      d.label += d.Symptom_Group_Description + "<br>";
+                      d.label += "Discriminator: " + d.Symptom_Discriminator_Code + "<br>";
+                      d.label += "" + d.Symptom_Descriminator_Description;
                   }
               });
               d.supplySG.sort(desc);
@@ -11884,28 +11959,28 @@ var App = (function (exports) {
   }
   function loadSankeyChart(config) {
       chart.innerHTML = "";
-      config.db.sankey.nodes.forEach((node) => {
+      config.db.sankey.nodes.forEach(function (node) {
           if (node.grouping && !node.grouping[0].color) {
-              const max = Math.max(...node.grouping.map((l) => l.value), 0);
-              node.grouping.forEach((l) => l.color = color$2(l.value / max));
+              var max_1 = Math.max.apply(Math, __spreadArrays(node.grouping.map(function (l) { return l.value; }), [0]));
+              node.grouping.forEach(function (l) { return l.color = color$2(l.value / max_1); });
           }
       });
-      config.db.sankey.links.forEach((link) => {
+      config.db.sankey.links.forEach(function (link) {
           if (link.supply && !link.supply[0].color) {
-              const max = Math.max(...link.supply.map((l) => l.value), 0);
-              link.supply.forEach((l) => l.color = color$2(l.value / max));
+              var max_2 = Math.max.apply(Math, __spreadArrays(link.supply.map(function (l) { return l.value; }), [0]));
+              link.supply.forEach(function (l) { return l.color = color$2(l.value / max_2); });
           }
           if (link.supplyDx && !link.supplyDx[0].color) {
-              const max = Math.max(...link.supplyDx.map((l) => l.value), 0);
-              link.supplyDx.forEach((l) => l.color = color$2(l.value / max));
+              var max_3 = Math.max.apply(Math, __spreadArrays(link.supplyDx.map(function (l) { return l.value; }), [0]));
+              link.supplyDx.forEach(function (l) { return l.color = color$2(l.value / max_3); });
           }
           if (link.supplyService && !link.supplyService[0].color) {
-              const max = Math.max(...link.supplyService.map((l) => l.value), 0);
-              link.supplyService.forEach((l) => l.color = color$2(l.value / max));
+              var max_4 = Math.max.apply(Math, __spreadArrays(link.supplyService.map(function (l) { return l.value; }), [0]));
+              link.supplyService.forEach(function (l) { return l.color = color$2(l.value / max_4); });
           }
           if (link.supplyBook && !link.supplyBook[0].color) {
-              const max = Math.max(...link.supplyBook.map((l) => l.value), 0);
-              link.supplyBook.forEach((l) => l.color = color$2(l.value / max));
+              var max_5 = Math.max.apply(Math, __spreadArrays(link.supplyBook.map(function (l) { return l.value; }), [0]));
+              link.supplyBook.forEach(function (l) { return l.color = color$2(l.value / max_5); });
           }
       });
       config.sankey = new Sankey({
@@ -11921,7 +11996,7 @@ var App = (function (exports) {
           playback: false
       });
       config.sankey.draw();
-      setTimeout(() => window.dispatchEvent(new CustomEvent("show-legend")), 1500);
+      setTimeout(function () { return window.dispatchEvent(new CustomEvent("show-legend")); }, 1500);
   }
 
   /**
@@ -11937,12 +12012,12 @@ var App = (function (exports) {
    * Renders title bar components
    */
   function initTitleBar() {
-      const org = document.getElementById("lblOrganisationStatus");
-      const day = document.getElementById("lblDayStatus");
-      const call = document.getElementById("lblCallStatus");
-      window.addEventListener("org-selected", (e) => org.textContent = e.detail + " |");
-      window.addEventListener("day-selected", (e) => day.textContent = e.detail + " |");
-      window.addEventListener("call-selected", (e) => call.textContent = e.detail);
+      var org = document.getElementById("lblOrganisationStatus");
+      var day = document.getElementById("lblDayStatus");
+      var call = document.getElementById("lblCallStatus");
+      window.addEventListener("org-selected", function (e) { return org.textContent = e.detail + " |"; });
+      window.addEventListener("day-selected", function (e) { return day.textContent = e.detail + " |"; });
+      window.addEventListener("call-selected", function (e) { return call.textContent = e.detail; });
   }
 
   /**
@@ -11950,10 +12025,11 @@ var App = (function (exports) {
    * @param config
    */
   function initOrganisationList(config) {
-      const org = document.getElementById("Organisation");
+      var _this = this;
+      var org = document.getElementById("Organisation");
       org.innerHTML = "";
-      for (let key in config.filters.organisations) {
-          const option = document.createElement("option");
+      for (var key in config.filters.organisations) {
+          var option = document.createElement("option");
           option.textContent = config.filters.organisations[key];
           if (option.textContent === "SEL") {
               org.insertAdjacentElement("afterbegin", option);
@@ -11966,16 +12042,24 @@ var App = (function (exports) {
       if (config.querystring.organisation) {
           org.value = config.querystring.organisation;
       }
-      org.addEventListener("change", () => __awaiter(this, void 0, void 0, function* () {
-          window.dispatchEvent(new CustomEvent("org-selected", { detail: org.value }));
-          config.db.file = org.options[org.selectedIndex].value + ".zip";
-          yield fetchDataStore(config)
-              .then(() => {
-              config.db.file = config.db.file.replace(/\.zip$/, "m.json");
-              return openDataFile(config);
-          })
-              .then(file => processDayFile(file, config));
-      }));
+      org.addEventListener("change", function () { return __awaiter(_this, void 0, void 0, function () {
+          return __generator(this, function (_a) {
+              switch (_a.label) {
+                  case 0:
+                      window.dispatchEvent(new CustomEvent("org-selected", { detail: org.value }));
+                      config.db.file = org.options[org.selectedIndex].value + ".zip";
+                      return [4 /*yield*/, fetchDataStore(config)
+                              .then(function () {
+                              config.db.file = config.db.file.replace(/\.zip$/, "m.json");
+                              return openDataFile(config);
+                          })
+                              .then(function (file) { return processDayFile(file, config); })];
+                  case 1:
+                      _a.sent();
+                      return [2 /*return*/];
+              }
+          });
+      }); });
       if (org) {
           org.dispatchEvent(new Event("change"));
       }
@@ -11987,7 +12071,7 @@ var App = (function (exports) {
   function initEnvironment(config) {
       config.environment = window.location.hostname === "localhost" ? "DEVELOPMENT" : "PRODUCTION";
       if (config.environment === "DEVELOPMENT") {
-          const dev = document.createElement("div");
+          var dev = document.createElement("div");
           dev.classList.add("dev-mode");
           dev.textContent = config.environment;
           document.body.appendChild(dev);
@@ -12269,11 +12353,11 @@ var App = (function (exports) {
   });
 
   function start$2() {
-      const datapath = window.location.hostname === "localhost"
+      var datapath = window.location.hostname === "localhost"
           ? "./json/"
           : "https://raw.githubusercontent.com/NELCSU/ED-Flows/master/docs/json/";
       json(datapath + "config.json", function (d) {
-          const config = d;
+          var config = d;
           config.db.path = datapath;
           initEnvironment(config);
           initTitleBar();
