@@ -1,6 +1,6 @@
 import { getMonthYear } from "../../utils/format";
-import { setQueryHash } from "../urlhash";
-import type { TConfig } from "../../typings/ED";
+import { setSankeyQueryHash } from "../urlhash";
+import type { TSankeyConfig } from "../../typings/ED";
 
 const day = document.getElementById("Day") as HTMLInputElement;
 const label = document.getElementById("lblDay") as HTMLLabelElement;
@@ -8,7 +8,7 @@ const label = document.getElementById("lblDay") as HTMLLabelElement;
 /**
  * @param config 
  */
-export function initDayList(config: TConfig) {
+export function initDayList(config: TSankeyConfig) {
   day.addEventListener("change", e => {
     const raw = config.filters.days[parseInt(day.value)];
     const fdate = getMonthYear(raw);
@@ -21,8 +21,8 @@ export function initDayList(config: TConfig) {
 /**
  * @param config 
  */
-export function updateDayList(config: TConfig) {
-  setQueryHash(config);
+export function updateDayList(config: TSankeyConfig) {
+  setSankeyQueryHash(config);
   day.max = config.filters.days.length - 1 + "";
   const i = config.filters.days.findIndex((e: string) => e === config.querystring.day);
   day.value = (i > -1 ? i : 0) + "";

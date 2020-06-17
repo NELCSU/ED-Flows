@@ -1,0 +1,25 @@
+{
+  "db": {
+    "file": null,
+    "path": null,
+    "stream": null,
+    "zip": null
+  },
+  "environment": "DEVELOPMENT",
+  "filters": {
+    "coding": [
+      {"group": "Coding","id": "ball","name": "r2","title": "All","value": "ALL"},
+      {"group": "Coding","id": "bdx","name": "r2","title": "Disposition","value": "DX"},
+      {"group": "Coding","id": "bsg","name": "r2","title": "Symptom group","value": "SG"}
+    ],
+    "uplift": [
+      {"group": "Uplift","id": "b06","name": "r1","title": "6% uplift","value": "06"},
+      {"group": "Uplift","id": "b66","name": "r1", "title": "66% uplift", "value": "66"},
+      {"group": "Uplift","id": "b86","name": "r1","title": "86% uplift","value": "86"}
+    ],
+    "organisations": ["NCL", "NEL", "NWL", "SEL", "SWL"]
+  },
+  "querystring": { "coding": "", "organisation": "", "uplift": "" },
+  "stream": null,
+  "themes": ["light", "dark"]
+}

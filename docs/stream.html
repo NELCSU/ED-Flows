@@ -1,0 +1,64 @@
+<!DOCTYPE xhtml>
+<html xmlns="https://www.w3.org/1999/xhtml">
+
+<head>
+	<meta http-equiv="content-Type" content="text/html; charset=utf-8" />
+	<meta name="description" content="ED Flows" />
+	<meta name="keywords" content="NHS, ED, urgent care" />
+
+	<title>ED Flows</title>
+
+	<link href="favicon.ico" rel="shortcut icon" />
+	<link href="css/index.css" rel="stylesheet" />
+
+	<script src="lib/jszip/jszip.min.js"></script>
+	<script src="lib/jszip-utils.min.js"></script>
+</head>
+
+<body>
+	<div class="loading th-fg-color">
+		<div>Loading ...</div>
+	</div>
+	<div id="content" style="opacity:0; visibility:hidden;">
+
+		<div id="titlebar">
+			<div class="titlebar-item">
+				<a href="index.html" title="Home">
+					<img class="titlebar-icon" src="images/nhs.svg" alt="Home" />
+				</a>
+				<h1 class="th-fg-color">ED Flows</h1>
+			</div>
+			<div class="titlebar-item">
+				<div id="lblOrganisationStatus" class="th-fg-color">Organisation</div>
+				<div id="lblUpliftStatus" class="th-fg-color">Uplift</div>
+				<div id="lblCodingStatus" class="th-fg-color">Coding</div>
+				<div class="menu-button">CHART OPTIONS</div>
+			</div>
+		</div>
+
+		<div id="chart"></div>
+	</div>
+
+	<aside class="menu border ready">
+		<div class="panel-row th-fg-color" title="Select an organisation from the list">
+			<label id="lblOrganisation" for="Organisation">Organisation:</label>
+			<select id="Organisation"></select>
+		</div>
+
+		<div class="uplift-options th-fg-color" title="Select the uplift percentage"></div>
+
+		<div class="coding-options th-fg-color" title="Select the coding"></div>
+	
+		<div class="panel-row th-fg-color" title="Change page color scheme">
+			<label id="lblColors" for="Colors">Colors:</label>
+			<select id="Colors"></select>
+		</div>
+	</aside>
+
+	<script src="js/stream.js"></script>
+	<script type="text/javascript">
+		App.start();
+	</script>
+</body>
+
+</html>

@@ -1,5 +1,5 @@
 
-import type { TConfig, TPoint, TMargin } from "../../typings/ED";
+import type { TSankeyConfig, TPoint, TMargin } from "../../typings/ED";
 import { event, select } from "d3-selection";
 import { drag } from "d3-drag";
 import { transition } from "d3-transition";
@@ -9,7 +9,7 @@ import { polygonLength, polygonCentroid } from "d3-polygon";
 /**
  * @param config 
  */
-export function initSankeyLegend(config: TConfig) {
+export function initSankeyLegend(config: TSankeyConfig) {
 	const legShowHide = document.getElementById("LegendShowHide") as HTMLInputElement;
 
 	function hide() {

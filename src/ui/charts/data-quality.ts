@@ -1,11 +1,11 @@
 import { getMonthYear } from "../../utils/format";
-import type { TConfig } from "../../typings/ED";
+import type { TSankeyConfig } from "../../typings/ED";
 
 /**
  * Initialises Data Quality chart
  * @param config
  */
-export function initDataQualityChart(config: TConfig) {
+export function initDataQualityChart(config: TSankeyConfig) {
   const container = document.getElementById("lblDQStatus") as HTMLDivElement;
   const status = container.querySelector("img") as HTMLImageElement;
 

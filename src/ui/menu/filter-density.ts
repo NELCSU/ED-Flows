@@ -1,9 +1,9 @@
-import type { TConfig } from "../../typings/ED";
+import type { TSankeyConfig } from "../../typings/ED";
 
 /**
  * @param config 
  */
-export function initDensitySlider(config: TConfig) {
+export function initDensitySlider(config: TSankeyConfig) {
 	const density = document.getElementById("Density") as HTMLInputElement;
 	config.filters.density = 5;
 	density.addEventListener("change", (e: Event) => {

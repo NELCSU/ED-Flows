@@ -12,7 +12,27 @@ export default [
 		},
 	  output: [
 			{
-				file: "docs/js/app.js",
+				file: "docs/js/index.js",
+				format: "iife",
+				name: "App",
+			}
+	  ],
+	  plugins: [
+			resolve(),
+			commonjs(),
+			typescript()	
+		]
+	},
+	{
+		input: "src/stream.ts",
+		onwarn(warning, rollupWarn) {
+			if (warning.code !== "CIRCULAR_DEPENDENCY") {
+				rollupWarn(warning);
+			}
+		},
+	  output: [
+			{
+				file: "docs/js/stream.js",
 				format: "iife",
 				name: "App",
 			}

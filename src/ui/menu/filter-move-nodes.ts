@@ -1,9 +1,9 @@
-import type { TConfig } from "../../typings/ED";
+import type { TSankeyConfig } from "../../typings/ED";
 
 /**
 * @param config 
 */
-export function initSankeyNodeMovement(config: TConfig) {
+export function initSankeyNodeMovement(config: TSankeyConfig) {
  const x = document.getElementById("MoveX") as HTMLInputElement;
  const y = document.getElementById("MoveY") as HTMLInputElement;
  config.filters.move.x = true;

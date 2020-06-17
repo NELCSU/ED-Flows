@@ -1,29 +1,28 @@
 import { updateSplash } from "./ui/splash";
-import { initSankeyMenu } from "./ui/menu";
-import { initSankeyCharts } from "./ui/charts";
-import { initSankeyTitleBar } from "./ui/titlebar";
-import { initSankeyOrganisationList } from "./ui/menu/filter-organisation";
+import { initStreamMenu } from "./ui/menu";
+import { initStreamCharts } from "./ui/charts";
+import { initStreamTitleBar } from "./ui/titlebar";
+import { initStreamOrganisationList } from "./ui/menu/filter-organisation";
 import { initEnvironment } from "./ui/environment";
 import { json } from "d3-request";
 
 export function start() {
   const datapath = window.location.hostname === "localhost"
-    ? "./json/sankey/" 
-    : "https://raw.githubusercontent.com/NELCSU/ED-Flows/master/docs/json/sankey/";
+    ? "./json/stream/" 
+    : "https://raw.githubusercontent.com/NELCSU/ED-Flows/master/docs/json/stream/";
 
   json(datapath + "config.json", function(d) {
     const config = d;
     config.db.path = datapath;
     initEnvironment(config);
-    initSankeyTitleBar();
-    initSankeyMenu(config);
-    initSankeyCharts(config);
-    initSankeyOrganisationList(config);
+    initStreamTitleBar();
+    initStreamMenu(config);
+    initStreamCharts(config);
+    initStreamOrganisationList(config);
     updateSplash();
 
     document.body.addEventListener("click", function(e) {
       e.stopImmediatePropagation();
-      window.dispatchEvent(new CustomEvent("hide-breakdown", { detail: config }));
       window.dispatchEvent(new CustomEvent("hide-menu"));
       window.dispatchEvent(new CustomEvent("clear-chart"));
     });

@@ -65,7 +65,7 @@ type D3Selection = {
   transition: Function
 };
 
-type TFilterCall = {
+type TFilterOptionGroup = {
   group: string,
   id: string,
   name: string,
@@ -82,7 +82,7 @@ interface IDictionary {
   [key: string]: string;
 }
 
-export type TConfig = {
+export type TSankeyConfig = {
   breakdown: {
     chart: TBreakdown[][],
     display: string[][],
@@ -105,7 +105,7 @@ export type TConfig = {
   },
   environment: "DEVELOPMENT" | "PRODUCTION",
   filters: {
-    calls: TFilterCall[],
+    calls: TFilterOptionGroup[],
     days: string[],
     density: number,
     move: {
@@ -138,5 +138,27 @@ export type TConfig = {
     message: string,
     red: TImage
   }
+  themes: string[]
+};
+
+export type TStreamConfig = {
+  db: {
+    file: string,
+    path: string,
+    stream: any,
+    zip: TJSZip
+  },
+  environment: "DEVELOPMENT" | "PRODUCTION",
+  filters: {
+    coding: TFilterOptionGroup[],
+    organisations: string[],
+    uplift: TFilterOptionGroup[]
+  },
+  querystring: {
+    coding: string,
+    organisation: string,
+    uplift: string
+  },
+  stream: any,
   themes: string[]
 };

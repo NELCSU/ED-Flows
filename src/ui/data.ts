@@ -1,13 +1,13 @@
 import { updateCallList } from "../ui/menu/filter-call";
 import { updateDayList } from "./menu/filter-day";
-import { setQueryHash } from "../ui/urlhash";
-import type { TConfig, TJSZip } from "../typings/ED";
+import { setSankeyQueryHash, setStreamQueryHash } from "../ui/urlhash";
+import type { TSankeyConfig, TStreamConfig, TJSZip } from "../typings/ED";
 import { left, right } from "@buckneri/string";
 
 /**
  * @param config 
  */
-export async function fetchDataStore(config: TConfig): Promise<ArrayBuffer> {
+export async function fetchDataStore(config: TSankeyConfig | TStreamConfig): Promise<ArrayBuffer> {
 	const p: Function = (file: string) => {
 		return new Promise((resolve, reject) => {
 			// @ts-ignore
@@ -34,7 +34,7 @@ export async function fetchDataStore(config: TConfig): Promise<ArrayBuffer> {
 /**
  * @param config
  */
-export async function openDataFile(config: TConfig): Promise<string> {
+export async function openDataFile(config: TSankeyConfig | TStreamConfig): Promise<string> {
 	return config.db.zip.file(config.db.file).async("string");
 }
 
@@ -42,7 +42,7 @@ export async function openDataFile(config: TConfig): Promise<string> {
  * @param data 
  * @param config 
  */
-export function processDayFile(data: string, config: TConfig) {
+export function processDayFile(data: string, config: TSankeyConfig) {
   config.db.dq = JSON.parse(data);
   config.filters.days = [];
   for (let key in config.db.dq.interpolated) {
@@ -55,6 +55,17 @@ export function processDayFile(data: string, config: TConfig) {
 	});
 	updateDayList(config);
 	updateCallList(config);
-	setQueryHash(config);
+	setSankeyQueryHash(config);
+	window.dispatchEvent(new CustomEvent("filter-action"));
+}
+
+/**
+ * @param data 
+ * @param config 
+ */
+export function processStreamFile(data: string, config: TStreamConfig) {
+  config.db.stream = JSON.parse(data);
+
+	setStreamQueryHash(config);
 	window.dispatchEvent(new CustomEvent("filter-action"));
 }

@@ -1,4 +1,4 @@
-import type { TBreakdown, TConfig } from "../../typings/ED";
+import type { TBreakdown, TSankeyConfig } from "../../typings/ED";
 import { Sankey, TLink } from "@buckneri/sankey";
 import { rollup, sum } from "d3-array";
 import { scaleSequential } from "d3-scale";
@@ -13,7 +13,7 @@ const fp: Intl.NumberFormat = new Intl.NumberFormat("en-GB", { style: "decimal"}
 /**
  * @param config 
  */
-export function initSankeyChart(config: TConfig) {
+export function initSankeyChart(config: TSankeyConfig) {
   window.addEventListener("sankey-chart", () => loadSankeyChart(config));
 
   window.addEventListener("clear-chart", () => { config.sankey.clearSelection(); });
@@ -152,7 +152,7 @@ export function initSankeyChart(config: TConfig) {
   });
 }
 
-export function loadSankeyChart(config: TConfig) {
+export function loadSankeyChart(config: TSankeyConfig) {
   chart.innerHTML = "";
 
   config.db.sankey.nodes.forEach((node: any) => {

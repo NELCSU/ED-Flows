@@ -1,19 +1,19 @@
 import { left, right } from "@buckneri/string";
-import { getQueryHash } from "../urlhash";
-import type { TConfig, TFilterCall } from "../../typings/ED";
+import { getSankeyQueryHash } from "../urlhash";
+import type { TSankeyConfig, TFilterOptionGroup } from "../../typings/ED";
 
 /**
  * Creates call options. All options are available initially.
  * @param config 
  */
-export function initCallList(config: TConfig) {
-	getQueryHash(config);
+export function initCallList(config: TSankeyConfig) {
+	getSankeyQueryHash(config);
 	const parent = document.querySelector(".call-options") as HTMLDivElement;
 	if (parent) {
 		parent.innerHTML = "";
 		let group = "", grpdiv, label;
 		let control: HTMLDivElement;
-		config.filters.calls.forEach((call: TFilterCall) => {
+		config.filters.calls.forEach((call: TFilterOptionGroup) => {
 			if (group !== call.group) {
 				group = call.group;
 				grpdiv = document.createElement("div");
@@ -49,10 +49,10 @@ export function initCallList(config: TConfig) {
  * Scans for first valid file and select corresponding call menu choice
  * @param config
  */
-export function updateCallList(config: TConfig) {
+export function updateCallList(config: TSankeyConfig) {
 	const files = Object.keys(config.db.zip.files);
 	let ctrl: HTMLInputElement | null;
-	config.filters.calls.forEach((call: TFilterCall) => {
+	config.filters.calls.forEach((call: TFilterOptionGroup) => {
 		ctrl = document.getElementById(call.id) as HTMLInputElement;
 		if (ctrl) {
 			ctrl.disabled = true;
@@ -63,7 +63,7 @@ export function updateCallList(config: TConfig) {
 	for (let i = 0; i < files.length; i++) {
 		let key = right(files[i], 7);
 		key = left(key, 2);
-		let found = config.filters.calls.findIndex((e: TFilterCall) => e.value === key);
+		let found = config.filters.calls.findIndex((e: TFilterOptionGroup) => e.value === key);
 		if (found > -1) {
 			ctrl = document.getElementById(config.filters.calls[found].id) as HTMLInputElement;
 			if (ctrl) {

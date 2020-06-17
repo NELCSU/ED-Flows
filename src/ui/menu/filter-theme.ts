@@ -1,10 +1,10 @@
-import type { TConfig } from "../../typings/ED";
+import type { TSankeyConfig, TStreamConfig } from "../../typings/ED";
 
 /**
  * Creates user control
  * @param config
  */
-export function initUIThemes(config: TConfig) {
+export function initUIThemes(config: TSankeyConfig | TStreamConfig) {
   const select = document.getElementById("Colors") as HTMLSelectElement;
   if (select) {
     select.title = "Select a color scheme for this page";

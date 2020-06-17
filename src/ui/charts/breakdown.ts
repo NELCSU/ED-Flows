@@ -1,11 +1,11 @@
 import { drawColumnChart } from "../charts/column";
 import { drawDataTable } from "../charts/table";
-import type { TConfig, TBreakdown } from "../../typings/ED";
+import type { TSankeyConfig, TBreakdown } from "../../typings/ED";
 
 /**
  * @param config 
  */
-export function initBreakdown(config: TConfig) {
+export function initBreakdown(config: TSankeyConfig) {
 	const container = document.querySelector(".breakdown");
 	const action = container?.querySelector(".breakdown-action") as HTMLDivElement;
 	const message = container?.querySelector(".breakdown-message") as HTMLDivElement;
@@ -34,7 +34,7 @@ export function initBreakdown(config: TConfig) {
 		displayBreakdown(config);
 	}
 
-	function displayBreakdown(config: TConfig): void {
+	function displayBreakdown(config: TSankeyConfig): void {
 		if (current >= config.breakdown.chart.length) {
 			current = 0;
 		}
@@ -75,7 +75,7 @@ export function initBreakdown(config: TConfig) {
 		window.dispatchEvent(new CustomEvent("hide-menu"));
 	}
 
-	function displayStatus(config: TConfig): void {
+	function displayStatus(config: TSankeyConfig): void {
 		clear();
 		
 		if (message) {

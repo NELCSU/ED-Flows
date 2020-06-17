@@ -33,7 +33,7 @@ function changeStyle(i: number) {
 /**
  * Creates user control
  */
-export function initUIThemes() {
+export function initUIThemes(): void {
   const select = document.getElementById("theme_choice") as HTMLSelectElement;
   if (select) {
     select.title = "Select a color scheme for this page";
