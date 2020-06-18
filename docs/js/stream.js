@@ -6503,29 +6503,6 @@ var App = (function (exports) {
   var color$2 = sequential(interpolateViridis).domain([0, 1]);
   var chart = document.getElementById("chart");
 
-  /*! *****************************************************************************
-  Copyright (c) Microsoft Corporation.
-
-  Permission to use, copy, modify, and/or distribute this software for any
-  purpose with or without fee is hereby granted.
-
-  THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-  REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-  AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-  INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-  LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-  OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-  PERFORMANCE OF THIS SOFTWARE.
-  ***************************************************************************** */
-
-  function __spreadArrays() {
-      for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
-      for (var r = Array(s), k = 0, i = 0; i < il; i++)
-          for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
-              r[k] = a[j];
-      return r;
-  }
-
   function ascending$2(a, b) {
     return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
   }
@@ -10873,22 +10850,6 @@ var App = (function (exports) {
       xmlns: "http://www.w3.org/2000/xmlns/"
   };
   /**
-   * Measure the content area minus the padding and border
-   * @param container - DOM element to measure
-   * @returns - DOMRect
-   */
-  function measure(container) {
-      let result = JSON.parse(JSON.stringify(container.getBoundingClientRect()));
-      const s = window.getComputedStyle(container);
-      let ph = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom);
-      let pw = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight);
-      let bh = parseFloat(s.borderTopWidth) + parseFloat(s.borderBottomWidth);
-      let bw = parseFloat(s.borderLeftWidth) + parseFloat(s.borderRightWidth);
-      result.width = result.width - pw - bw;
-      result.height = result.height - ph - bh;
-      return result;
-  }
-  /**
    * Creates SVG element for use with D3 visualisations
    * @param container - parent DOM element to append SVG to
    * @param options - string to select from
@@ -10898,7 +10859,7 @@ var App = (function (exports) {
           options = {};
       }
       if (options.height === undefined || options.width === undefined) {
-          const bbox = measure(container);
+          const bbox = container.getBoundingClientRect();
           options.height = bbox.height;
           options.width = bbox.width;
       }
@@ -10950,6 +10911,7 @@ var App = (function (exports) {
       function Streamchart(options) {
           this.container = document.querySelector("body");
           this.h = 200;
+          this.locale = "en-GB";
           this.margin = { bottom: 20, left: 20, right: 30, top: 20 };
           this.rh = 160;
           this.rw = 150;
@@ -10958,7 +10920,6 @@ var App = (function (exports) {
           this._data = { labels: { axis: { x: "" }, series: [] }, series: [] };
           this._extentX = [new Date(), new Date()];
           this._extentY = [0, 0];
-          this._fp = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2, style: "percent" });
           this._id = "";
           if (options.margin !== undefined) {
               var m = options.margin;
@@ -10970,12 +10931,14 @@ var App = (function (exports) {
           }
           if (options.container !== undefined) {
               this.container = options.container;
-              var box = this.container.getBoundingClientRect();
-              this.h = box.height;
-              this.w = box.width;
-              this.rh = this.h - this.margin.top - this.margin.bottom;
-              this.rw = this.w - this.margin.left - this.margin.right;
           }
+          var box = this.container.getBoundingClientRect();
+          this.h = box.height;
+          this.w = box.width;
+          this.rh = this.h - this.margin.top - this.margin.bottom;
+          this.rw = this.w - this.margin.left - this.margin.right;
+          this.formatY = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 2, style: "decimal" });
+          this._fp = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 2, style: "percent" });
           this.data(options.data);
       }
       /**
@@ -11189,7 +11152,7 @@ var App = (function (exports) {
           var dt = mouseDate - d0.data.period > d1.data.period - mouseDate ? d1 : d0;
           var v = Math.abs(dt[1] - dt[0]);
           var perc = this._fp.format((v / dt.data.sum));
-          this._tip.text(d.key + ": " + v + " (" + perc + " of total for " + dt.data.period.toLocaleDateString() + ")");
+          this._tip.text(d.key + ": " + this.formatY.format(v) + " (" + perc + " of total for " + dt.data.period.toLocaleDateString(this.locale) + ")");
           this._marker.select("line")
               .attr("x1", this._scaleX(dt.data.period))
               .attr("x2", this._scaleX(dt.data.period))
@@ -11234,8 +11197,8 @@ var App = (function (exports) {
       Streamchart.prototype._scalingExtent = function () {
           var max = undefined;
           this._extentX = extent(this._data.series, function (d) { return d.period; });
-          this._data.series.forEach(function (d) { return max = Math.max.apply(Math, __spreadArrays([max === undefined ? 0 : max], d.values)); });
-          this._extentY = [-(max === undefined ? 0 : max), max === undefined ? 0 : max];
+          this._data.series.forEach(function (d) { return max = Math.max(max === undefined ? 0 : max, d.sum); });
+          this._extentY = [max === undefined ? 0 : -max, max === undefined ? 0 : max];
           return this;
       };
       return Streamchart;

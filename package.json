@@ -7,7 +7,7 @@
     "@buckneri/js-lib-slicer": "^0.3.3",
     "@buckneri/sankey": "^0.3.0",
     "@buckneri/spline": "^0.7.0",
-    "@buckneri/streamchart": "^0.2.0",
+    "@buckneri/streamchart": "^0.2.1",
     "@buckneri/string": "^0.4.3",
     "d3-array": "^2.4.0",
     "d3-axis": "^1.0.12",
@@ -73,5 +73,5 @@
     "update-all": "npm run update-jszip",
     "update-jszip": "ncp node_modules/jszip/dist docs/lib/jszip"
   },
-  "version": "0.3.0"
+  "version": "0.3.1"
 }
