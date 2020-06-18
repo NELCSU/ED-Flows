@@ -7,7 +7,7 @@
     "@buckneri/js-lib-slicer": "^0.3.3",
     "@buckneri/sankey": "^0.3.0",
     "@buckneri/spline": "^0.7.0",
-    "@buckneri/streamchart": "^0.2.1",
+    "@buckneri/streamchart": "^0.2.3",
     "@buckneri/string": "^0.4.3",
     "d3-array": "^2.4.0",
     "d3-axis": "^1.0.12",
@@ -35,7 +35,7 @@
     "autoprefixer": "^9.8.0",
     "clean-css": "^4.2.3",
     "eslint": "^7.2.0",
-    "eslint-plugin-jsdoc": "^27.1.1",
+    "eslint-plugin-jsdoc": "^27.1.2",
     "jsdoc": "^3.6.4",
     "npm-run-all": "^4.1.5",
     "postcss-cli": "^7.1.1",
@@ -73,5 +73,5 @@
     "update-all": "npm run update-jszip",
     "update-jszip": "ncp node_modules/jszip/dist docs/lib/jszip"
   },
-  "version": "0.3.1"
+  "version": "0.3.2"
 }

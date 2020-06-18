@@ -24,13 +24,14 @@ export function initStreamChart(config: TStreamConfig) {
 }
 
 export function loadStreamChart(config: TStreamConfig) {
-  chart.innerHTML = "";
-
-  config.stream = new Streamchart({
-    container: chart,
-    data: config.db.stream,
-    margin: { bottom: 20, left: 20, right: 20, top: 20 },
-  });
-
-  config.stream.draw();
+  if (config.stream === null) {
+    config.stream = new Streamchart({
+      container: chart,
+      data: config.db.stream,
+      margin: { bottom: 20, left: 20, right: 20, top: 20 },
+    });
+    config.stream.draw();
+  } else {
+    config.stream.data(config.db.stream).draw();
+  } 
 }

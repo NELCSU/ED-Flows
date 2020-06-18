@@ -10915,6 +10915,7 @@ var App = (function (exports) {
           this.margin = { bottom: 20, left: 20, right: 30, top: 20 };
           this.rh = 160;
           this.rw = 150;
+          this.ticksX = 5;
           this.w = 200;
           this._color = ordinal(schemePaired);
           this._data = { labels: { axis: { x: "" }, series: [] }, series: [] };
@@ -11040,6 +11041,7 @@ var App = (function (exports) {
               .attr("cy", 0);
       };
       Streamchart.prototype._drawAxes = function () {
+          var _this = this;
           var _a;
           if (this._axis === undefined) {
               this._axis = this._canvas.append("g")
@@ -11047,15 +11049,20 @@ var App = (function (exports) {
                   .attr("transform", "translate(0," + this.rh * 0.9 + ")");
           }
           this._axis.call(axisBottom(this._scaleX).tickSize(-this.rh * 0.7)).select(".domain").remove();
-          var xAxisLabel = this._canvas.select("text.stream-axis-text");
+          var xAxisLabel = this._canvas.select("text.stream-xaxis-text");
           if (xAxisLabel.empty()) {
-              this._canvas.append("text")
-                  .attr("class", "stream-axis-text")
+              xAxisLabel = this._canvas.append("text")
+                  .attr("class", "stream-xaxis-text")
                   .attr("text-anchor", "end")
                   .attr("x", this.rw)
-                  .attr("y", this.rh - 30);
+                  .attr("y", this.rh - 30)
+                  .on("click", function () {
+                  _this.ticksX = _this.ticksX > 10 ? 5 : _this.ticksX + 1;
+                  _this._scaling().draw();
+              });
+              xAxisLabel.append("title").text("Click to increase detail on the x axis");
           }
-          xAxisLabel.text("Time (" + ((_a = this._data.labels) === null || _a === void 0 ? void 0 : _a.axis.x) + ")");
+          xAxisLabel.text((_a = this._data.labels) === null || _a === void 0 ? void 0 : _a.axis.x);
           this._tip = this._canvas.select("text.stream-tip");
           if (this._tip.empty()) {
               this._tip = this._canvas.append("text")
@@ -11187,7 +11194,7 @@ var App = (function (exports) {
        * Calculates the chart scale
        */
       Streamchart.prototype._scaling = function () {
-          this._scaleX = scaleTime().domain(this._extentX).range([0, this.rw]);
+          this._scaleX = scaleTime().domain(this._extentX).range([0, this.rw]).nice(this.ticksX);
           this._scaleY = linear$1$1().domain(this._extentY).range([this.rh, 0]);
           return this;
       };
@@ -11219,13 +11226,17 @@ var App = (function (exports) {
       });
   }
   function loadStreamChart(config) {
-      chart$1.innerHTML = "";
-      config.stream = new Streamchart({
-          container: chart$1,
-          data: config.db.stream,
-          margin: { bottom: 20, left: 20, right: 20, top: 20 },
-      });
-      config.stream.draw();
+      if (config.stream === null) {
+          config.stream = new Streamchart({
+              container: chart$1,
+              data: config.db.stream,
+              margin: { bottom: 20, left: 20, right: 20, top: 20 },
+          });
+          config.stream.draw();
+      }
+      else {
+          config.stream.data(config.db.stream).draw();
+      }
   }
 
   /**
