@@ -5,7 +5,6 @@ table {
   margin: 5px;
   min-width: 200px;
   text-align: left;
-  width: 80%;
 }
 
 tbody {
@@ -33,16 +32,22 @@ th {
 
 tr {
   display: table-row;
-  vertical-align: inherit;
+  vertical-align: middle;
 }
 
-.table-scroll {
+tr.row:nth-child(even) {
+  background: #fff;
+}
+
+tr.row:nth-child(odd) {
+  background: #eee;
+}
+
+.table-grid {
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
-  width: 80%;
-}
-
-.mark {
-  width: 5px;
+  width: 100%;
 }
 
 .column-sort {
@@ -59,4 +64,33 @@ tr {
 
 .column-sort.desc::after {
   content: "\00A0\1F817";
+}
+
+.navigation {
+  user-select: none;
+}
+
+.navigation > span {
+  cursor: pointer;
+}
+
+.hidden {
+  @include globals.hidden;
+
+  display: none !important;
+}
+
+.disabled {
+  @include globals.disabled;
+
+  opacity: 0.3;
+}
+
+.row-icon {
+  border: 1px solid #000;
+  border-radius: 50%;
+  display: inline-block;
+  height: 0.9em;
+  vertical-align: middle;
+  width: 0.9em;
 }

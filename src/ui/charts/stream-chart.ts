@@ -28,6 +28,7 @@ export function loadStreamChart(config: TStreamConfig) {
     config.stream = new Streamchart({
       container: chart,
       data: config.db.stream,
+      formatY: new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0, style: "decimal" }),
       margin: { bottom: 20, left: 20, right: 20, top: 20 },
     });
     config.stream.draw();

@@ -10915,7 +10915,7 @@ var App = (function (exports) {
           this.margin = { bottom: 20, left: 20, right: 30, top: 20 };
           this.rh = 160;
           this.rw = 150;
-          this.ticksX = 5;
+          this.ticksX = 10;
           this.w = 200;
           this._color = ordinal(schemePaired);
           this._data = { labels: { axis: { x: "" }, series: [] }, series: [] };
@@ -10930,6 +10930,18 @@ var App = (function (exports) {
               m.bottom = isNaN(m.bottom) ? 0 : m.bottom;
               this.margin = m;
           }
+          if (options.locale !== undefined) {
+              this.locale = options.locale;
+          }
+          if (options.formatY !== undefined) {
+              this.formatY = options.formatY;
+          }
+          else {
+              this.formatY = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 2, style: "decimal" });
+          }
+          if (options.ticksX !== undefined) {
+              this.ticksX = options.ticksX;
+          }
           if (options.container !== undefined) {
               this.container = options.container;
           }
@@ -10938,7 +10950,6 @@ var App = (function (exports) {
           this.w = box.width;
           this.rh = this.h - this.margin.top - this.margin.bottom;
           this.rw = this.w - this.margin.left - this.margin.right;
-          this.formatY = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 2, style: "decimal" });
           this._fp = new Intl.NumberFormat(this.locale, { maximumFractionDigits: 2, style: "percent" });
           this.data(options.data);
       }
@@ -11230,6 +11241,7 @@ var App = (function (exports) {
           config.stream = new Streamchart({
               container: chart$1,
               data: config.db.stream,
+              formatY: new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0, style: "decimal" }),
               margin: { bottom: 20, left: 20, right: 20, top: 20 },
           });
           config.stream.draw();

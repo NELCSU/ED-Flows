@@ -1,5 +1,5 @@
 import { drawColumnChart } from "../charts/column";
-import { drawDataTable } from "../charts/table";
+import { TableGrid } from "@buckneri/table";
 import type { TSankeyConfig, TBreakdown } from "../../typings/ED";
 
 /**
@@ -66,7 +66,21 @@ export function initBreakdown(config: TSankeyConfig) {
 				if (config.breakdown.display[current][0] === "column") {
 					drawColumnChart(chart, config.breakdown.chart[current]);
 				} else {
-					drawDataTable(chart, config.breakdown.chart[current]);
+					const data = {
+						headers: [
+							{ sort: false, value: "" },
+							{ sort: true, value: "Category" },
+							{ sort: true, value: "Value" }
+						],
+						rows: config.breakdown.chart[current].map(r => [{ color: r.color, value: "" }, { value: r.label }, { value: r.value }])
+					};
+					const tblGrid = new TableGrid({
+						container: chart,
+						data: data,
+						rows: 4
+					});
+
+					tblGrid.draw();
 				}
 			}
 		}
