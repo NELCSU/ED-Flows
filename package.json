@@ -7,7 +7,7 @@
     "@buckneri/js-lib-slicer": "^0.3.3",
     "@buckneri/sankey": "^0.3.0",
     "@buckneri/spline": "^0.7.0",
-    "@buckneri/streamchart": "^0.2.4",
+    "@buckneri/streamchart": "^0.2.5",
     "@buckneri/string": "^0.4.3",
     "@buckneri/table": "^0.2.1",
     "d3-array": "^2.4.0",
