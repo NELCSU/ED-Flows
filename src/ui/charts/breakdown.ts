@@ -1,5 +1,5 @@
 import { drawColumnChart } from "../charts/column";
-import { TableGrid } from "@buckneri/table";
+import { TableGrid, TTableOptions } from "@buckneri/table";
 import type { TSankeyConfig, TBreakdown } from "../../typings/ED";
 
 /**
@@ -78,7 +78,7 @@ export function initBreakdown(config: TSankeyConfig) {
 						container: chart,
 						data: data,
 						rows: 4
-					});
+					} as any);
 
 					tblGrid.draw();
 				}

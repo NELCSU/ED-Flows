@@ -11331,12 +11331,6 @@ var App = (function (exports) {
    */
   function initEnvironment(config) {
       config.environment = window.location.hostname === "localhost" ? "DEVELOPMENT" : "PRODUCTION";
-      if (config.environment === "DEVELOPMENT") {
-          var dev = document.createElement("div");
-          dev.classList.add("dev-mode");
-          dev.textContent = config.environment;
-          document.body.appendChild(dev);
-      }
   }
 
   var prefix = "$";
