@@ -69,10 +69,6 @@ var App = (function (exports) {
   }
 
   /**
-   * Returns true if character is an aposthrophe
-   * @param text - single character to inspect
-   */
-  /**
    * Select n characters from the left side of string s
    * @param s - string to select from
    * @param n - number of characters to select
