@@ -69,6 +69,12 @@ var App = (function (exports) {
   }
 
   /**
+   * Returns iterator of regexp matches located in string
+   * @param d - string to test
+   * @param re - array of regular expressions to search over
+   */
+
+  /**
    * Select n characters from the left side of string s
    * @param s - string to select from
    * @param n - number of characters to select
@@ -4779,10 +4785,11 @@ var App = (function (exports) {
       ticks = new Array(n = Math.ceil(stop - start + 1));
       while (++i < n) ticks[i] = (start + i) * step;
     } else {
+      step = -step;
       start = Math.floor(start * step);
       stop = Math.ceil(stop * step);
-      ticks = new Array(n = Math.ceil(start - stop + 1));
-      while (++i < n) ticks[i] = (start - i) / step;
+      ticks = new Array(n = Math.ceil(stop - start + 1));
+      while (++i < n) ticks[i] = (start + i) / step;
     }
 
     if (reverse) ticks.reverse();
