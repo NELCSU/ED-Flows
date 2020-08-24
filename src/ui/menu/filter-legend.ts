@@ -103,7 +103,7 @@ export function initSankeyLegend(config: TSankeyConfig) {
 
 		legend.transition(t as any).style("opacity", 1);
 
-		function dragged(d: TPoint) {
+		function dragged(event: any, d: TPoint) {
 			d.x += event.dx;
 			d.y += event.dy;
 			legend.attr("transform", (d: any) => `translate(${[d.x, d.y]})`);

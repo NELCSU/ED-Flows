@@ -231,7 +231,7 @@ var App = (function (exports) {
   function namespace(name) {
     var prefix = name += "", i = prefix.indexOf(":");
     if (i >= 0 && (prefix = name.slice(0, i)) !== "xmlns") name = name.slice(i + 1);
-    return namespaces.hasOwnProperty(prefix) ? {space: namespaces[prefix], local: name} : name;
+    return namespaces.hasOwnProperty(prefix) ? {space: namespaces[prefix], local: name} : name; // eslint-disable-line no-prototype-builtins
   }
 
   function creatorInherit(name) {
@@ -280,6 +280,12 @@ var App = (function (exports) {
     return new Selection(subgroups, this._parents);
   }
 
+  function array(x) {
+    return typeof x === "object" && "length" in x
+      ? x // Array, TypedArray, NodeList, array-like
+      : Array.from(x); // Map, Set, iterable, string, or anything else
+  }
+
   function empty() {
     return [];
   }
@@ -290,8 +296,16 @@ var App = (function (exports) {
     };
   }
 
+  function arrayAll(select) {
+    return function() {
+      var group = select.apply(this, arguments);
+      return group == null ? [] : array(group);
+    };
+  }
+
   function selection_selectAll(select) {
-    if (typeof select !== "function") select = selectorAll(select);
+    if (typeof select === "function") select = arrayAll(select);
+    else select = selectorAll(select);
 
     for (var groups = this._groups, m = groups.length, subgroups = [], parents = [], j = 0; j < m; ++j) {
       for (var group = groups[j], n = group.length, node, i = 0; i < n; ++i) {
@@ -309,6 +323,46 @@ var App = (function (exports) {
     return function() {
       return this.matches(selector);
     };
+  }
+
+  function childMatcher(selector) {
+    return function(node) {
+      return node.matches(selector);
+    };
+  }
+
+  var find = Array.prototype.find;
+
+  function childFind(match) {
+    return function() {
+      return find.call(this.children, match);
+    };
+  }
+
+  function childFirst() {
+    return this.firstElementChild;
+  }
+
+  function selection_selectChild(match) {
+    return this.select(match == null ? childFirst
+        : childFind(typeof match === "function" ? match : childMatcher(match)));
+  }
+
+  var filter = Array.prototype.filter;
+
+  function children() {
+    return this.children;
+  }
+
+  function childrenFilter(match) {
+    return function() {
+      return filter.call(this.children, match);
+    };
+  }
+
+  function selection_selectChildren(match) {
+    return this.selectAll(match == null ? children
+        : childrenFilter(typeof match === "function" ? match : childMatcher(match)));
   }
 
   function selection_filter(match) {
@@ -355,8 +409,6 @@ var App = (function (exports) {
     };
   }
 
-  var keyPrefix = "$"; // Protect against keys like “__proto__”.
-
   function bindIndex(parent, group, enter, update, exit, data) {
     var i = 0,
         node,
@@ -386,7 +438,7 @@ var App = (function (exports) {
   function bindKey(parent, group, enter, update, exit, data, key) {
     var i,
         node,
-        nodeByKeyValue = {},
+        nodeByKeyValue = new Map,
         groupLength = group.length,
         dataLength = data.length,
         keyValues = new Array(groupLength),
@@ -396,11 +448,11 @@ var App = (function (exports) {
     // If multiple nodes have the same key, the duplicates are added to exit.
     for (i = 0; i < groupLength; ++i) {
       if (node = group[i]) {
-        keyValues[i] = keyValue = keyPrefix + key.call(node, node.__data__, i, group);
-        if (keyValue in nodeByKeyValue) {
+        keyValues[i] = keyValue = key.call(node, node.__data__, i, group) + "";
+        if (nodeByKeyValue.has(keyValue)) {
           exit[i] = node;
         } else {
-          nodeByKeyValue[keyValue] = node;
+          nodeByKeyValue.set(keyValue, node);
         }
       }
     }
@@ -409,11 +461,11 @@ var App = (function (exports) {
     // If there a node associated with this key, join and add it to update.
     // If there is not (or the key is a duplicate), add it to enter.
     for (i = 0; i < dataLength; ++i) {
-      keyValue = keyPrefix + key.call(parent, data[i], i, data);
-      if (node = nodeByKeyValue[keyValue]) {
+      keyValue = key.call(parent, data[i], i, data) + "";
+      if (node = nodeByKeyValue.get(keyValue)) {
         update[i] = node;
         node.__data__ = data[i];
-        nodeByKeyValue[keyValue] = null;
+        nodeByKeyValue.delete(keyValue);
       } else {
         enter[i] = new EnterNode(parent, data[i]);
       }
@@ -421,18 +473,18 @@ var App = (function (exports) {
 
     // Add any remaining nodes that were not bound to data to exit.
     for (i = 0; i < groupLength; ++i) {
-      if ((node = group[i]) && (nodeByKeyValue[keyValues[i]] === node)) {
+      if ((node = group[i]) && (nodeByKeyValue.get(keyValues[i]) === node)) {
         exit[i] = node;
       }
     }
   }
 
+  function datum(node) {
+    return node.__data__;
+  }
+
   function selection_data(value, key) {
-    if (!value) {
-      data = new Array(this.size()), j = -1;
-      this.each(function(d) { data[++j] = d; });
-      return data;
-    }
+    if (!arguments.length) return Array.from(this, datum);
 
     var bind = key ? bindKey : bindIndex,
         parents = this._parents,
@@ -444,7 +496,7 @@ var App = (function (exports) {
       var parent = parents[j],
           group = groups[j],
           groupLength = group.length,
-          data = value.call(parent, parent && parent.__data__, j, parents),
+          data = array(value.call(parent, parent && parent.__data__, j, parents)),
           dataLength = data.length,
           enterGroup = enter[j] = new Array(dataLength),
           updateGroup = update[j] = new Array(dataLength),
@@ -483,6 +535,7 @@ var App = (function (exports) {
   }
 
   function selection_merge(selection) {
+    if (!(selection instanceof Selection)) throw new Error("invalid merge");
 
     for (var groups0 = this._groups, groups1 = selection._groups, m0 = groups0.length, m1 = groups1.length, m = Math.min(m0, m1), merges = new Array(m0), j = 0; j < m; ++j) {
       for (var group0 = groups0[j], group1 = groups1[j], n = group0.length, merge = merges[j] = new Array(n), node, i = 0; i < n; ++i) {
@@ -544,9 +597,7 @@ var App = (function (exports) {
   }
 
   function selection_nodes() {
-    var nodes = new Array(this.size()), i = -1;
-    this.each(function() { nodes[++i] = this; });
-    return nodes;
+    return Array.from(this);
   }
 
   function selection_node() {
@@ -562,8 +613,8 @@ var App = (function (exports) {
   }
 
   function selection_size() {
-    var size = 0;
-    this.each(function() { ++size; });
+    let size = 0;
+    for (const node of this) ++size; // eslint-disable-line no-unused-vars
     return size;
   }
 
@@ -899,31 +950,9 @@ var App = (function (exports) {
         : this.node().__data__;
   }
 
-  var filterEvents = {};
-
-  if (typeof document !== "undefined") {
-    var element = document.documentElement;
-    if (!("onmouseenter" in element)) {
-      filterEvents = {mouseenter: "mouseover", mouseleave: "mouseout"};
-    }
-  }
-
-  function filterContextListener(listener, index, group) {
-    listener = contextListener(listener, index, group);
+  function contextListener(listener) {
     return function(event) {
-      var related = event.relatedTarget;
-      if (!related || (related !== this && !(related.compareDocumentPosition(this) & 8))) {
-        listener.call(this, event);
-      }
-    };
-  }
-
-  function contextListener(listener, index, group) {
-    return function(event1) {
-      try {
-        listener.call(this, this.__data__, index, group);
-      } finally {
-      }
+      listener.call(this, event, this.__data__);
     };
   }
 
@@ -941,7 +970,7 @@ var App = (function (exports) {
       if (!on) return;
       for (var j = 0, i = -1, m = on.length, o; j < m; ++j) {
         if (o = on[j], (!typename.type || o.type === typename.type) && o.name === typename.name) {
-          this.removeEventListener(o.type, o.listener, o.capture);
+          this.removeEventListener(o.type, o.listener, o.options);
         } else {
           on[++i] = o;
         }
@@ -951,26 +980,25 @@ var App = (function (exports) {
     };
   }
 
-  function onAdd(typename, value, capture) {
-    var wrap = filterEvents.hasOwnProperty(typename.type) ? filterContextListener : contextListener;
-    return function(d, i, group) {
-      var on = this.__on, o, listener = wrap(value, i, group);
+  function onAdd(typename, value, options) {
+    return function() {
+      var on = this.__on, o, listener = contextListener(value);
       if (on) for (var j = 0, m = on.length; j < m; ++j) {
         if ((o = on[j]).type === typename.type && o.name === typename.name) {
-          this.removeEventListener(o.type, o.listener, o.capture);
-          this.addEventListener(o.type, o.listener = listener, o.capture = capture);
+          this.removeEventListener(o.type, o.listener, o.options);
+          this.addEventListener(o.type, o.listener = listener, o.options = options);
           o.value = value;
           return;
         }
       }
-      this.addEventListener(typename.type, listener, capture);
-      o = {type: typename.type, name: typename.name, value: value, listener: listener, capture: capture};
+      this.addEventListener(typename.type, listener, options);
+      o = {type: typename.type, name: typename.name, value: value, listener: listener, options: options};
       if (!on) this.__on = [o];
       else on.push(o);
     };
   }
 
-  function selection_on(typename, value, capture) {
+  function selection_on(typename, value, options) {
     var typenames = parseTypenames(typename + ""), i, n = typenames.length, t;
 
     if (arguments.length < 2) {
@@ -986,8 +1014,7 @@ var App = (function (exports) {
     }
 
     on = value ? onAdd : onRemove;
-    if (capture == null) capture = false;
-    for (i = 0; i < n; ++i) this.each(on(typenames[i], value, capture));
+    for (i = 0; i < n; ++i) this.each(on(typenames[i], value, options));
     return this;
   }
 
@@ -1024,6 +1051,14 @@ var App = (function (exports) {
         : dispatchConstant)(type, params));
   }
 
+  function* selection_iterator() {
+    for (var groups = this._groups, j = 0, m = groups.length; j < m; ++j) {
+      for (var group = groups[j], i = 0, n = group.length, node; i < n; ++i) {
+        if (node = group[i]) yield node;
+      }
+    }
+  }
+
   var root = [null];
 
   function Selection(groups, parents) {
@@ -1035,16 +1070,23 @@ var App = (function (exports) {
     return new Selection([[document.documentElement]], root);
   }
 
+  function selection_selection() {
+    return this;
+  }
+
   Selection.prototype = selection.prototype = {
     constructor: Selection,
     select: selection_select,
     selectAll: selection_selectAll,
+    selectChild: selection_selectChild,
+    selectChildren: selection_selectChildren,
     filter: selection_filter,
     data: selection_data,
     enter: selection_enter,
     exit: selection_exit,
     join: selection_join,
     merge: selection_merge,
+    selection: selection_selection,
     order: selection_order,
     sort: selection_sort,
     call: selection_call,
@@ -1067,7 +1109,8 @@ var App = (function (exports) {
     clone: selection_clone,
     datum: selection_datum,
     on: selection_on,
-    dispatch: selection_dispatch
+    dispatch: selection_dispatch,
+    [Symbol.iterator]: selection_iterator
   };
 
   function select(selector) {
@@ -1076,7 +1119,7 @@ var App = (function (exports) {
         : new Selection([[selector]], root);
   }
 
-  var noop = {value: function() {}};
+  var noop = {value: () => {}};
 
   function dispatch() {
     for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
@@ -1273,7 +1316,7 @@ var App = (function (exports) {
   function timeout$1(callback, delay, time) {
     var t = new Timer;
     delay = delay == null ? 0 : +delay;
-    t.restart(function(elapsed) {
+    t.restart(elapsed => {
       t.stop();
       callback(elapsed + delay);
     }, delay, time);
@@ -1841,11 +1884,7 @@ var App = (function (exports) {
         : m1) * 255;
   }
 
-  function constant$1(x) {
-    return function() {
-      return x;
-    };
-  }
+  var constant$1 = x => () => x;
 
   function linear(a, d) {
     return function(t) {
@@ -2067,19 +2106,12 @@ var App = (function (exports) {
     };
   }
 
-  var cssNode,
-      cssRoot,
-      cssView,
-      svgNode;
+  var svgNode;
 
+  /* eslint-disable no-undef */
   function parseCss(value) {
-    if (value === "none") return identity;
-    if (!cssNode) cssNode = document.createElement("DIV"), cssRoot = document.documentElement, cssView = document.defaultView;
-    cssNode.style.transform = value;
-    value = cssView.getComputedStyle(cssRoot.appendChild(cssNode), null).getPropertyValue("transform");
-    cssRoot.removeChild(cssNode);
-    value = value.slice(7, -1).split(",");
-    return decompose(+value[0], +value[1], +value[2], +value[3], +value[4], +value[5]);
+    const m = new (typeof DOMMatrix === "function" ? DOMMatrix : WebKitCSSMatrix)(value + "");
+    return m.isIdentity ? identity : decompose(m.a, m.b, m.c, m.d, m.e, m.f);
   }
 
   function parseSvg(value) {
@@ -2416,6 +2448,19 @@ var App = (function (exports) {
         : get$1(this.node(), id).ease;
   }
 
+  function easeVarying(id, value) {
+    return function() {
+      var v = value.apply(this, arguments);
+      if (typeof v !== "function") throw new Error;
+      set$1(this, id).ease = v;
+    };
+  }
+
+  function transition_easeVarying(value) {
+    if (typeof value !== "function") throw new Error;
+    return this.each(easeVarying(this._id, value));
+  }
+
   function transition_filter(match) {
     if (typeof match !== "function") match = matcher(match);
 
@@ -2727,6 +2772,9 @@ var App = (function (exports) {
 
         schedule.on = on1;
       });
+
+      // The selection was empty, resolve end immediately
+      if (size === 0) resolve();
     });
   }
 
@@ -2775,7 +2823,9 @@ var App = (function (exports) {
     delay: transition_delay,
     duration: transition_duration,
     ease: transition_ease,
-    end: transition_end
+    easeVarying: transition_easeVarying,
+    end: transition_end,
+    [Symbol.iterator]: selection_prototype[Symbol.iterator]
   };
 
   function cubicInOut(t) {
@@ -2793,7 +2843,7 @@ var App = (function (exports) {
     var timing;
     while (!(timing = node.__transition) || !(timing = timing[id])) {
       if (!(node = node.parentNode)) {
-        return defaultTiming.time = now(), defaultTiming;
+        throw new Error(`transition ${id} not found`);
       }
     }
     return timing;
@@ -2987,8 +3037,8 @@ var App = (function (exports) {
       while (++i < n) ticks[i] = (start + i) * step;
     } else {
       step = -step;
-      start = Math.floor(start * step);
-      stop = Math.ceil(stop * step);
+      start = Math.ceil(start * step);
+      stop = Math.floor(stop * step);
       ticks = new Array(n = Math.ceil(stop - start + 1));
       while (++i < n) ticks[i] = (start + i) / step;
     }
@@ -3039,10 +3089,16 @@ var App = (function (exports) {
     return x;
   }
 
+  function formatDecimal(x) {
+    return Math.abs(x = Math.round(x)) >= 1e21
+        ? x.toLocaleString("en").replace(/,/g, "")
+        : x.toString(10);
+  }
+
   // Computes the decimal coefficient and exponent of the specified number x with
   // significant digits p, where x is positive and p is in [1, 21] or undefined.
-  // For example, formatDecimal(1.23) returns ["123", 0].
-  function formatDecimal(x, p) {
+  // For example, formatDecimalParts(1.23) returns ["123", 0].
+  function formatDecimalParts(x, p) {
     if ((i = (x = p ? x.toExponential(p - 1) : x.toExponential()).indexOf("e")) < 0) return null; // NaN, ±Infinity
     var i, coefficient = x.slice(0, i);
 
@@ -3055,7 +3111,7 @@ var App = (function (exports) {
   }
 
   function exponent(x) {
-    return x = formatDecimal(Math.abs(x)), x ? x[1] : NaN;
+    return x = formatDecimalParts(Math.abs(x)), x ? x[1] : NaN;
   }
 
   function formatGroup(grouping, thousands) {
@@ -3148,7 +3204,7 @@ var App = (function (exports) {
   var prefixExponent;
 
   function formatPrefixAuto(x, p) {
-    var d = formatDecimal(x, p);
+    var d = formatDecimalParts(x, p);
     if (!d) return x + "";
     var coefficient = d[0],
         exponent = d[1],
@@ -3157,11 +3213,11 @@ var App = (function (exports) {
     return i === n ? coefficient
         : i > n ? coefficient + new Array(i - n + 1).join("0")
         : i > 0 ? coefficient.slice(0, i) + "." + coefficient.slice(i)
-        : "0." + new Array(1 - i).join("0") + formatDecimal(x, Math.max(0, p + i - 1))[0]; // less than 1y!
+        : "0." + new Array(1 - i).join("0") + formatDecimalParts(x, Math.max(0, p + i - 1))[0]; // less than 1y!
   }
 
   function formatRounded(x, p) {
-    var d = formatDecimal(x, p);
+    var d = formatDecimalParts(x, p);
     if (!d) return x + "";
     var coefficient = d[0],
         exponent = d[1];
@@ -3171,19 +3227,19 @@ var App = (function (exports) {
   }
 
   var formatTypes = {
-    "%": function(x, p) { return (x * 100).toFixed(p); },
-    "b": function(x) { return Math.round(x).toString(2); },
-    "c": function(x) { return x + ""; },
-    "d": function(x) { return Math.round(x).toString(10); },
-    "e": function(x, p) { return x.toExponential(p); },
-    "f": function(x, p) { return x.toFixed(p); },
-    "g": function(x, p) { return x.toPrecision(p); },
-    "o": function(x) { return Math.round(x).toString(8); },
-    "p": function(x, p) { return formatRounded(x * 100, p); },
+    "%": (x, p) => (x * 100).toFixed(p),
+    "b": (x) => Math.round(x).toString(2),
+    "c": (x) => x + "",
+    "d": formatDecimal,
+    "e": (x, p) => x.toExponential(p),
+    "f": (x, p) => x.toFixed(p),
+    "g": (x, p) => x.toPrecision(p),
+    "o": (x) => Math.round(x).toString(8),
+    "p": (x, p) => formatRounded(x * 100, p),
     "r": formatRounded,
     "s": formatPrefixAuto,
-    "X": function(x) { return Math.round(x).toString(16).toUpperCase(); },
-    "x": function(x) { return Math.round(x).toString(16); }
+    "X": (x) => Math.round(x).toString(16).toUpperCase(),
+    "x": (x) => Math.round(x).toString(16)
   };
 
   function identity$2(x) {
@@ -3200,7 +3256,7 @@ var App = (function (exports) {
         decimal = locale.decimal === undefined ? "." : locale.decimal + "",
         numerals = locale.numerals === undefined ? identity$2 : formatNumerals(map.call(locale.numerals, String)),
         percent = locale.percent === undefined ? "%" : locale.percent + "",
-        minus = locale.minus === undefined ? "-" : locale.minus + "",
+        minus = locale.minus === undefined ? "−" : locale.minus + "",
         nan = locale.nan === undefined ? "NaN" : locale.nan + "";
 
     function newFormat(specifier) {
@@ -3335,11 +3391,9 @@ var App = (function (exports) {
   var formatPrefix;
 
   defaultLocale({
-    decimal: ".",
     thousands: ",",
     grouping: [3],
-    currency: ["$", ""],
-    minus: "-"
+    currency: ["$", ""]
   });
 
   function defaultLocale(definition) {
@@ -3405,38 +3459,36 @@ var App = (function (exports) {
     scale.nice = function(count) {
       if (count == null) count = 10;
 
-      var d = domain(),
-          i0 = 0,
-          i1 = d.length - 1,
-          start = d[i0],
-          stop = d[i1],
-          step;
+      var d = domain();
+      var i0 = 0;
+      var i1 = d.length - 1;
+      var start = d[i0];
+      var stop = d[i1];
+      var prestep;
+      var step;
+      var maxIter = 10;
 
       if (stop < start) {
         step = start, start = stop, stop = step;
         step = i0, i0 = i1, i1 = step;
       }
-
-      step = tickIncrement(start, stop, count);
-
-      if (step > 0) {
-        start = Math.floor(start / step) * step;
-        stop = Math.ceil(stop / step) * step;
+      
+      while (maxIter-- > 0) {
         step = tickIncrement(start, stop, count);
-      } else if (step < 0) {
-        start = Math.ceil(start * step) / step;
-        stop = Math.floor(stop * step) / step;
-        step = tickIncrement(start, stop, count);
-      }
-
-      if (step > 0) {
-        d[i0] = Math.floor(start / step) * step;
-        d[i1] = Math.ceil(stop / step) * step;
-        domain(d);
-      } else if (step < 0) {
-        d[i0] = Math.ceil(start * step) / step;
-        d[i1] = Math.floor(stop * step) / step;
-        domain(d);
+        if (step === prestep) {
+          d[i0] = start;
+          d[i1] = stop;
+          return domain(d);
+        } else if (step > 0) {
+          start = Math.floor(start / step) * step;
+          stop = Math.ceil(stop / step) * step;
+        } else if (step < 0) {
+          start = Math.ceil(start * step) / step;
+          stop = Math.floor(stop * step) / step;
+        } else {
+          break;
+        }
+        prestep = step;
       }
 
       return scale;
@@ -3517,6 +3569,13 @@ var App = (function (exports) {
       SlicerModifier[SlicerModifier["CTRL_KEY"] = 1] = "CTRL_KEY";
       SlicerModifier[SlicerModifier["SHIFT_KEY"] = 2] = "SHIFT_KEY";
   })(SlicerModifier || (SlicerModifier = {}));
+
+  /**
+   * Returns the x,y pair measurement
+   * @param referenceElement - element to position targetElement by
+   * @param targetElement - element that will receive position values
+   * @param padding - (optional) additional padding to account for
+   */
 
   var ResizeObserverBoxOptions;
   (function (ResizeObserverBoxOptions) {
@@ -3702,7 +3761,7 @@ var App = (function (exports) {
     };
   }
 
-  var keyPrefix$1 = "$"; // Protect against keys like “__proto__”.
+  var keyPrefix = "$"; // Protect against keys like “__proto__”.
 
   function bindIndex$1(parent, group, enter, update, exit, data) {
     var i = 0,
@@ -3743,7 +3802,7 @@ var App = (function (exports) {
     // If multiple nodes have the same key, the duplicates are added to exit.
     for (i = 0; i < groupLength; ++i) {
       if (node = group[i]) {
-        keyValues[i] = keyValue = keyPrefix$1 + key.call(node, node.__data__, i, group);
+        keyValues[i] = keyValue = keyPrefix + key.call(node, node.__data__, i, group);
         if (keyValue in nodeByKeyValue) {
           exit[i] = node;
         } else {
@@ -3756,7 +3815,7 @@ var App = (function (exports) {
     // If there a node associated with this key, join and add it to update.
     // If there is not (or the key is a duplicate), add it to enter.
     for (i = 0; i < dataLength; ++i) {
-      keyValue = keyPrefix$1 + key.call(parent, data[i], i, data);
+      keyValue = keyPrefix + key.call(parent, data[i], i, data);
       if (node = nodeByKeyValue[keyValue]) {
         update[i] = node;
         node.__data__ = data[i];
@@ -4246,16 +4305,16 @@ var App = (function (exports) {
         : this.node().__data__;
   }
 
-  var filterEvents$1 = {};
+  var filterEvents = {};
 
   if (typeof document !== "undefined") {
-    var element$1 = document.documentElement;
-    if (!("onmouseenter" in element$1)) {
-      filterEvents$1 = {mouseenter: "mouseover", mouseleave: "mouseout"};
+    var element = document.documentElement;
+    if (!("onmouseenter" in element)) {
+      filterEvents = {mouseenter: "mouseover", mouseleave: "mouseout"};
     }
   }
 
-  function filterContextListener$1(listener, index, group) {
+  function filterContextListener(listener, index, group) {
     listener = contextListener$1(listener, index, group);
     return function(event) {
       var related = event.relatedTarget;
@@ -4299,7 +4358,7 @@ var App = (function (exports) {
   }
 
   function onAdd$1(typename, value, capture) {
-    var wrap = filterEvents$1.hasOwnProperty(typename.type) ? filterContextListener$1 : contextListener$1;
+    var wrap = filterEvents.hasOwnProperty(typename.type) ? filterContextListener : contextListener$1;
     return function(d, i, group) {
       var on = this.__on, o, listener = wrap(value, i, group);
       if (on) for (var j = 0, m = on.length; j < m; ++j) {
@@ -4983,17 +5042,17 @@ var App = (function (exports) {
     };
   }
 
-  var cssNode$1,
-      cssRoot$1,
-      cssView$1,
+  var cssNode,
+      cssRoot,
+      cssView,
       svgNode$1;
 
   function parseCss$1(value) {
     if (value === "none") return identity$3;
-    if (!cssNode$1) cssNode$1 = document.createElement("DIV"), cssRoot$1 = document.documentElement, cssView$1 = document.defaultView;
-    cssNode$1.style.transform = value;
-    value = cssView$1.getComputedStyle(cssRoot$1.appendChild(cssNode$1), null).getPropertyValue("transform");
-    cssRoot$1.removeChild(cssNode$1);
+    if (!cssNode) cssNode = document.createElement("DIV"), cssRoot = document.documentElement, cssView = document.defaultView;
+    cssNode.style.transform = value;
+    value = cssView.getComputedStyle(cssRoot.appendChild(cssNode), null).getPropertyValue("transform");
+    cssRoot.removeChild(cssNode);
     value = value.slice(7, -1).split(",");
     return decompose$1(+value[0], +value[1], +value[2], +value[3], +value[4], +value[5]);
   }
@@ -6540,9 +6599,6 @@ var App = (function (exports) {
     };
   }
 
-  var ascendingBisect$1 = bisector$1(ascending$2);
-  var bisectRight = ascendingBisect$1.right;
-
   function extent(values, valueof) {
     let min;
     let max;
@@ -6571,58 +6627,6 @@ var App = (function (exports) {
       }
     }
     return [min, max];
-  }
-
-  var e10$1 = Math.sqrt(50),
-      e5$1 = Math.sqrt(10),
-      e2$1 = Math.sqrt(2);
-
-  function ticks$1(start, stop, count) {
-    var reverse,
-        i = -1,
-        n,
-        ticks,
-        step;
-
-    stop = +stop, start = +start, count = +count;
-    if (start === stop && count > 0) return [start];
-    if (reverse = stop < start) n = start, start = stop, stop = n;
-    if ((step = tickIncrement$1(start, stop, count)) === 0 || !isFinite(step)) return [];
-
-    if (step > 0) {
-      start = Math.ceil(start / step);
-      stop = Math.floor(stop / step);
-      ticks = new Array(n = Math.ceil(stop - start + 1));
-      while (++i < n) ticks[i] = (start + i) * step;
-    } else {
-      start = Math.floor(start * step);
-      stop = Math.ceil(stop * step);
-      ticks = new Array(n = Math.ceil(start - stop + 1));
-      while (++i < n) ticks[i] = (start - i) / step;
-    }
-
-    if (reverse) ticks.reverse();
-
-    return ticks;
-  }
-
-  function tickIncrement$1(start, stop, count) {
-    var step = (stop - start) / Math.max(0, count),
-        power = Math.floor(Math.log(step) / Math.LN10),
-        error = step / Math.pow(10, power);
-    return power >= 0
-        ? (error >= e10$1 ? 10 : error >= e5$1 ? 5 : error >= e2$1 ? 2 : 1) * Math.pow(10, power)
-        : -Math.pow(10, -power) / (error >= e10$1 ? 10 : error >= e5$1 ? 5 : error >= e2$1 ? 2 : 1);
-  }
-
-  function tickStep$1(start, stop, count) {
-    var step0 = Math.abs(stop - start) / Math.max(0, count),
-        step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
-        error = step0 / step1;
-    if (error >= e10$1) step1 *= 10;
-    else if (error >= e5$1) step1 *= 5;
-    else if (error >= e2$1) step1 *= 2;
-    return stop < start ? -step1 : step1;
   }
 
   var slice = Array.prototype.slice;
@@ -6928,7 +6932,7 @@ var App = (function (exports) {
     };
   }
 
-  var keyPrefix$2 = "$"; // Protect against keys like “__proto__”.
+  var keyPrefix$1 = "$"; // Protect against keys like “__proto__”.
 
   function bindIndex$2(parent, group, enter, update, exit, data) {
     var i = 0,
@@ -6969,7 +6973,7 @@ var App = (function (exports) {
     // If multiple nodes have the same key, the duplicates are added to exit.
     for (i = 0; i < groupLength; ++i) {
       if (node = group[i]) {
-        keyValues[i] = keyValue = keyPrefix$2 + key.call(node, node.__data__, i, group);
+        keyValues[i] = keyValue = keyPrefix$1 + key.call(node, node.__data__, i, group);
         if (keyValue in nodeByKeyValue) {
           exit[i] = node;
         } else {
@@ -6982,7 +6986,7 @@ var App = (function (exports) {
     // If there a node associated with this key, join and add it to update.
     // If there is not (or the key is a duplicate), add it to enter.
     for (i = 0; i < dataLength; ++i) {
-      keyValue = keyPrefix$2 + key.call(parent, data[i], i, data);
+      keyValue = keyPrefix$1 + key.call(parent, data[i], i, data);
       if (node = nodeByKeyValue[keyValue]) {
         update[i] = node;
         node.__data__ = data[i];
@@ -7472,18 +7476,18 @@ var App = (function (exports) {
         : this.node().__data__;
   }
 
-  var filterEvents$2 = {};
+  var filterEvents$1 = {};
 
   var event = null;
 
   if (typeof document !== "undefined") {
-    var element$2 = document.documentElement;
-    if (!("onmouseenter" in element$2)) {
-      filterEvents$2 = {mouseenter: "mouseover", mouseleave: "mouseout"};
+    var element$1 = document.documentElement;
+    if (!("onmouseenter" in element$1)) {
+      filterEvents$1 = {mouseenter: "mouseover", mouseleave: "mouseout"};
     }
   }
 
-  function filterContextListener$2(listener, index, group) {
+  function filterContextListener$1(listener, index, group) {
     listener = contextListener$2(listener, index, group);
     return function(event) {
       var related = event.relatedTarget;
@@ -7530,7 +7534,7 @@ var App = (function (exports) {
   }
 
   function onAdd$2(typename, value, capture) {
-    var wrap = filterEvents$2.hasOwnProperty(typename.type) ? filterContextListener$2 : contextListener$2;
+    var wrap = filterEvents$1.hasOwnProperty(typename.type) ? filterContextListener$1 : contextListener$2;
     return function(d, i, group) {
       var on = this.__on, o, listener = wrap(value, i, group);
       if (on) for (var j = 0, m = on.length; j < m; ++j) {
@@ -7684,6 +7688,97 @@ var App = (function (exports) {
     return typeof selector === "string"
         ? new Selection$3([document.querySelectorAll(selector)], [document.documentElement])
         : new Selection$3([selector == null ? [] : selector], root$2);
+  }
+
+  function ascending$2$1(a, b) {
+    return a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+  }
+
+  function bisector$1$1(compare) {
+    if (compare.length === 1) compare = ascendingComparator$1$1(compare);
+    return {
+      left: function(a, x, lo, hi) {
+        if (lo == null) lo = 0;
+        if (hi == null) hi = a.length;
+        while (lo < hi) {
+          var mid = lo + hi >>> 1;
+          if (compare(a[mid], x) < 0) lo = mid + 1;
+          else hi = mid;
+        }
+        return lo;
+      },
+      right: function(a, x, lo, hi) {
+        if (lo == null) lo = 0;
+        if (hi == null) hi = a.length;
+        while (lo < hi) {
+          var mid = lo + hi >>> 1;
+          if (compare(a[mid], x) > 0) hi = mid;
+          else lo = mid + 1;
+        }
+        return lo;
+      }
+    };
+  }
+
+  function ascendingComparator$1$1(f) {
+    return function(d, x) {
+      return ascending$2$1(f(d), x);
+    };
+  }
+
+  var ascendingBisect$1 = bisector$1$1(ascending$2$1);
+  var bisectRight = ascendingBisect$1.right;
+
+  var e10$1 = Math.sqrt(50),
+      e5$1 = Math.sqrt(10),
+      e2$1 = Math.sqrt(2);
+
+  function ticks$1(start, stop, count) {
+    var reverse,
+        i = -1,
+        n,
+        ticks,
+        step;
+
+    stop = +stop, start = +start, count = +count;
+    if (start === stop && count > 0) return [start];
+    if (reverse = stop < start) n = start, start = stop, stop = n;
+    if ((step = tickIncrement$1(start, stop, count)) === 0 || !isFinite(step)) return [];
+
+    if (step > 0) {
+      start = Math.ceil(start / step);
+      stop = Math.floor(stop / step);
+      ticks = new Array(n = Math.ceil(stop - start + 1));
+      while (++i < n) ticks[i] = (start + i) * step;
+    } else {
+      start = Math.floor(start * step);
+      stop = Math.ceil(stop * step);
+      ticks = new Array(n = Math.ceil(start - stop + 1));
+      while (++i < n) ticks[i] = (start - i) / step;
+    }
+
+    if (reverse) ticks.reverse();
+
+    return ticks;
+  }
+
+  function tickIncrement$1(start, stop, count) {
+    var step = (stop - start) / Math.max(0, count),
+        power = Math.floor(Math.log(step) / Math.LN10),
+        error = step / Math.pow(10, power);
+    return power >= 0
+        ? (error >= e10$1 ? 10 : error >= e5$1 ? 5 : error >= e2$1 ? 2 : 1) * Math.pow(10, power)
+        : -Math.pow(10, -power) / (error >= e10$1 ? 10 : error >= e5$1 ? 5 : error >= e2$1 ? 2 : 1);
+  }
+
+  function tickStep$1(start, stop, count) {
+    var step0 = Math.abs(stop - start) / Math.max(0, count),
+        step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
+        error = step0 / step1;
+    if (error >= e10$1) step1 *= 10;
+    else if (error >= e5$1) step1 *= 5;
+    else if (error >= e2$1) step1 *= 2;
+    return stop < start ? -step1 : step1;
   }
 
   function initRange(domain, range) {
@@ -9876,7 +9971,7 @@ var App = (function (exports) {
       // Otherwise, assume interval is already a time interval and use it.
       if (typeof interval === "number") {
         var target = Math.abs(stop - start) / interval,
-            i = bisector$1(function(i) { return i[2]; }).right(tickIntervals, target),
+            i = bisector$1$1(function(i) { return i[2]; }).right(tickIntervals, target),
             step;
         if (i === tickIntervals.length) {
           step = tickStep$1(start / durationYear, stop / durationYear, interval);
@@ -9945,7 +10040,7 @@ var App = (function (exports) {
 
   var schemePaired = colors$1("a6cee31f78b4b2df8a33a02cfb9a99e31a1cfdbf6fff7f00cab2d66a3d9affff99b15928");
 
-  var pi = Math.PI,
+  const pi = Math.PI,
       tau = 2 * pi,
       epsilon$1 = 1e-6,
       tauEpsilon = tau - epsilon$1;
@@ -10080,6 +10175,12 @@ var App = (function (exports) {
     };
   }
 
+  function array$1(x) {
+    return typeof x === "object" && "length" in x
+      ? x // Array, TypedArray, NodeList, array-like
+      : Array.from(x); // Map, Set, iterable, string, or anything else
+  }
+
   function Linear(context) {
     this._context = context;
   }
@@ -10120,17 +10221,18 @@ var App = (function (exports) {
     return p[1];
   }
 
-  function line() {
-    var x$1 = x,
-        y$1 = y,
-        defined = constant$3$1(true),
+  function line(x$1, y$1) {
+    var defined = constant$3$1(true),
         context = null,
         curve = curveLinear,
         output = null;
 
+    x$1 = typeof x$1 === "function" ? x$1 : (x$1 === undefined) ? x : constant$3$1(x$1);
+    y$1 = typeof y$1 === "function" ? y$1 : (y$1 === undefined) ? y : constant$3$1(y$1);
+
     function line(data) {
       var i,
-          n = data.length,
+          n = (data = array$1(data)).length,
           d,
           defined0 = false,
           buffer;
@@ -10171,21 +10273,22 @@ var App = (function (exports) {
     return line;
   }
 
-  function area() {
-    var x0 = x,
-        x1 = null,
-        y0 = constant$3$1(0),
-        y1 = y,
+  function area(x0, y0, y1) {
+    var x1 = null,
         defined = constant$3$1(true),
         context = null,
         curve = curveLinear,
         output = null;
 
+    x0 = typeof x0 === "function" ? x0 : (x0 === undefined) ? x : constant$3$1(+x0);
+    y0 = typeof y0 === "function" ? y0 : (y0 === undefined) ? constant$3$1(0) : constant$3$1(+y0);
+    y1 = typeof y1 === "function" ? y1 : (y1 === undefined) ? y : constant$3$1(+y1);
+
     function area(data) {
       var i,
           j,
           k,
-          n = data.length,
+          n = (data = array$1(data)).length,
           d,
           defined0 = false,
           buffer,
@@ -10275,8 +10378,6 @@ var App = (function (exports) {
     return area;
   }
 
-  var slice$1 = Array.prototype.slice;
-
   function none$1$1(series, order) {
     if (!((n = series.length) > 1)) return;
     for (var i = 1, j, s0, s1 = series[order[0]], n, m = s1.length; i < n; ++i) {
@@ -10297,6 +10398,12 @@ var App = (function (exports) {
     return d[key];
   }
 
+  function stackSeries(key) {
+    const series = [];
+    series.key = key;
+    return series;
+  }
+
   function stack() {
     var keys = constant$3$1([]),
         order = none$2$1,
@@ -10304,22 +10411,17 @@ var App = (function (exports) {
         value = stackValue;
 
     function stack(data) {
-      var kz = keys.apply(this, arguments),
-          i,
-          m = data.length,
-          n = kz.length,
-          sz = new Array(n),
+      var sz = Array.from(keys.apply(this, arguments), stackSeries),
+          i, n = sz.length, j = -1,
           oz;
 
-      for (i = 0; i < n; ++i) {
-        for (var ki = kz[i], si = sz[i] = new Array(m), j = 0, sij; j < m; ++j) {
-          si[j] = sij = [0, +value(data[j], ki, j, data)];
-          sij.data = data[j];
+      for (const d of data) {
+        for (i = 0, ++j; i < n; ++i) {
+          (sz[i][j] = [0, +value(d, sz[i].key, j, data)]).data = d;
         }
-        si.key = ki;
       }
 
-      for (i = 0, oz = order(sz); i < n; ++i) {
+      for (i = 0, oz = array$1(order(sz)); i < n; ++i) {
         sz[oz[i]].index = i;
       }
 
@@ -10328,7 +10430,7 @@ var App = (function (exports) {
     }
 
     stack.keys = function(_) {
-      return arguments.length ? (keys = typeof _ === "function" ? _ : constant$3$1(slice$1.call(_)), stack) : keys;
+      return arguments.length ? (keys = typeof _ === "function" ? _ : constant$3$1(Array.from(_)), stack) : keys;
     };
 
     stack.value = function(_) {
@@ -10336,7 +10438,7 @@ var App = (function (exports) {
     };
 
     stack.order = function(_) {
-      return arguments.length ? (order = _ == null ? none$2$1 : typeof _ === "function" ? _ : constant$3$1(slice$1.call(_)), stack) : order;
+      return arguments.length ? (order = _ == null ? none$2$1 : typeof _ === "function" ? _ : constant$3$1(Array.from(_)), stack) : order;
     };
 
     stack.offset = function(_) {
@@ -11444,9 +11546,92 @@ var App = (function (exports) {
     return set;
   }
 
+  var noop$2 = {value: function() {}};
+
+  function dispatch$2() {
+    for (var i = 0, n = arguments.length, _ = {}, t; i < n; ++i) {
+      if (!(t = arguments[i] + "") || (t in _) || /[\s.]/.test(t)) throw new Error("illegal type: " + t);
+      _[t] = [];
+    }
+    return new Dispatch$2(_);
+  }
+
+  function Dispatch$2(_) {
+    this._ = _;
+  }
+
+  function parseTypenames$4(typenames, types) {
+    return typenames.trim().split(/^|\s+/).map(function(t) {
+      var name = "", i = t.indexOf(".");
+      if (i >= 0) name = t.slice(i + 1), t = t.slice(0, i);
+      if (t && !types.hasOwnProperty(t)) throw new Error("unknown type: " + t);
+      return {type: t, name: name};
+    });
+  }
+
+  Dispatch$2.prototype = dispatch$2.prototype = {
+    constructor: Dispatch$2,
+    on: function(typename, callback) {
+      var _ = this._,
+          T = parseTypenames$4(typename + "", _),
+          t,
+          i = -1,
+          n = T.length;
+
+      // If no callback was specified, return the callback of the given type and name.
+      if (arguments.length < 2) {
+        while (++i < n) if ((t = (typename = T[i]).type) && (t = get$3(_[t], typename.name))) return t;
+        return;
+      }
+
+      // If a type was specified, set the callback for the given type and name.
+      // Otherwise, if a null callback was specified, remove callbacks of the given name.
+      if (callback != null && typeof callback !== "function") throw new Error("invalid callback: " + callback);
+      while (++i < n) {
+        if (t = (typename = T[i]).type) _[t] = set$4(_[t], typename.name, callback);
+        else if (callback == null) for (t in _) _[t] = set$4(_[t], typename.name, null);
+      }
+
+      return this;
+    },
+    copy: function() {
+      var copy = {}, _ = this._;
+      for (var t in _) copy[t] = _[t].slice();
+      return new Dispatch$2(copy);
+    },
+    call: function(type, that) {
+      if ((n = arguments.length - 2) > 0) for (var args = new Array(n), i = 0, n, t; i < n; ++i) args[i] = arguments[i + 2];
+      if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
+      for (t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
+    },
+    apply: function(type, that, args) {
+      if (!this._.hasOwnProperty(type)) throw new Error("unknown type: " + type);
+      for (var t = this._[type], i = 0, n = t.length; i < n; ++i) t[i].value.apply(that, args);
+    }
+  };
+
+  function get$3(type, name) {
+    for (var i = 0, n = type.length, c; i < n; ++i) {
+      if ((c = type[i]).name === name) {
+        return c.value;
+      }
+    }
+  }
+
+  function set$4(type, name, callback) {
+    for (var i = 0, n = type.length; i < n; ++i) {
+      if (type[i].name === name) {
+        type[i] = noop$2, type = type.slice(0, i).concat(type.slice(i + 1));
+        break;
+      }
+    }
+    if (callback != null) type.push({name: name, value: callback});
+    return type;
+  }
+
   function request(url, callback) {
     var request,
-        event = dispatch("beforesend", "progress", "load", "error"),
+        event = dispatch$2("beforesend", "progress", "load", "error"),
         mimeType,
         headers = map$3(),
         xhr = new XMLHttpRequest,
