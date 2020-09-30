@@ -17,8 +17,8 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   const rw = width - margin.left - margin.right;
   const height = node.clientHeight;
   const rh = height - margin.top - margin.bottom;
-  const x = scaleBand().range([0, rw]).padding(0.1);
-  const y = scaleLinear().range([rh, 0]);
+  const x = scaleBand().range([0, rw]).padding(0.1) as any;
+  const y = scaleLinear().range([rh, 0]) as any;
 
   const sg = select(svg(node as HTMLElement, { height: height, margin: margin, width: width }) as any);
   const canvas = sg.select(".canvas");
@@ -29,7 +29,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
   y.domain([0, max(data, (d: any) => d.value) * 1.1]);
 
   const xAxis = axisBottom(x)
-    .tickValues(x.domain().filter((d, i) => data.length < 10 ? true : !(i % 3) || i === data.length - 1));
+    .tickValues(x.domain().filter((d: any, i: number) => data.length < 10 ? true : !(i % 3) || i === data.length - 1));
 
   const gAxis = canvas.append("g")
     .attr("class", "x axis")
@@ -78,7 +78,7 @@ export function drawColumnChart(node: Element, data: TBreakdown[]) {
     .attr("x", 0)
     .attr("width", x.bandwidth())
     .attr("y", 0)
-    .attr("height", (d: TBreakdown) => rh - y(d.value));
+    .attr("height", (d: any) => rh - y(d.value));
 
   rbar.append("title")
     .text((d: TBreakdown) => `${d.label}: ${fp.format(d.value)} calls`);
