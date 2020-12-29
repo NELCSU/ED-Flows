@@ -1,6 +1,6 @@
 
 import type { TSankeyConfig, TPoint, TMargin } from "../../typings/ED";
-import { event, select } from "d3-selection";
+import { select } from "d3-selection";
 import { drag } from "d3-drag";
 import { transition } from "d3-transition";
 import { Delaunay } from "d3-delaunay";
